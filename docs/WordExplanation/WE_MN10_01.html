@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Pāli 경전 단어학습장</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --bg-page: #FAF8F4;
+  --bg-left: #F3F0EA;
+  --bg-right: #FFFFFF;
+  --text-main: #2B2B28;
+  --text-sub: #6B6B63;
+  --border-color: #DAD5CB;
+  --accent: #8C6D46;
+  --highlight-bg: #FBF0D9;
+  --highlight-word-bg: #8C6D46;
+  --highlight-word-color: #FFFFFF;
+  --font-main: 'Pretendard Variable', 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif;
+  --font-pali: 'Pretendard Variable', 'Pretendard', 'Inter', 'Source Sans 3', -apple-system, sans-serif;
+  --font-scale: 1;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-page: #1E1C18;
+  --bg-left: #24221D;
+  --bg-right: #1E1C18;
+  --text-main: #EDE8DE;
+  --text-sub: #B8B2A5;
+  --border-color: #3A362E;
+  --highlight-bg: #4A3B1F;
+  --highlight-word-bg: #C4944A;
+  --highlight-word-color: #1E1C18;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-main);
+}
+
+.pali-text, .ko-text, .word-list, .right-block p {
+  font-size: calc(1rem * var(--font-scale));
+}
+.pali-text, .word-term {
+  font-family: var(--font-pali);
+}
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 1000;
+  flex-wrap: wrap;
+}
+
+.toolbar-title { font-weight: bold; flex-grow: 1; }
+
+#pdf-export {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+#pdf-export:hover { opacity: 0.85; }
+
+.container {
+  display: grid;
+  grid-template-columns: 4fr 6fr;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+}
+
+.left-pane {
+  position: sticky;
+  top: 55px; /* toolbar height approx */
+  height: calc(100vh - 55px);
+  overflow: hidden;
+  background: var(--bg-left);
+  padding: 20px;
+  box-sizing: border-box;
+  border-right: 1px solid var(--border-color);
+}
+
+.right-pane {
+  overflow-y: auto;
+  height: auto;
+  background: var(--bg-right);
+  padding: 20px 40px;
+  box-sizing: border-box;
+}
+
+.left-block { display: none; }
+.left-block.active { 
+  display: block; 
+  animation: fadeIn .15s ease-in; 
+}
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.right-block {
+  min-height: 50vh;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.para-no {
+  font-weight: bold;
+  color: var(--accent);
+  display: inline-block;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.pali-text { font-size: calc(1.1rem * var(--font-scale)); line-height: 1.6; margin-bottom: 15px; }
+.ko-text { line-height: 1.6; color: var(--text-sub); }
+
+.word-list { list-style: none; padding-left: 0; margin-top: 0; }
+.word-list > li { 
+  margin-bottom: 12px; 
+  position: relative; 
+  padding-left: 16px; 
+  line-height: 1.5;
+}
+.word-list > li::before { 
+  content: '•'; 
+  position: absolute; 
+  left: 0; 
+  color: var(--accent); 
+  font-weight: bold;
+}
+.word-list ul { 
+  list-style: none; 
+  padding-left: 12px; 
+  margin-top: 8px; 
+  margin-bottom: 8px;
+  border-left: 2px solid var(--border-color); 
+  margin-left: 2px; 
+}
+.word-list ul li { 
+  margin-bottom: 6px; 
+  line-height: 1.5;
+}
+.word-list > li > strong.word-term {
+  font-weight: 700;
+  font-size: 1.05em;
+  color: var(--text-main);
+}
+.word-list ul li strong.sub-word-term {
+  font-weight: 500;
+  color: var(--text-sub);
+}
+:root[data-theme="dark"] .word-list ul li strong.sub-word-term {
+  color: #D0C9BA;
+}
+
+.search-hit { background: var(--highlight-bg); }
+
+/* ===== 3영역 공통 하이라이트 스타일 ===== */
+.pali-text .pw.hl,
+.ko-text .kw.hl,
+.word-term.hl,
+.word-list > li > strong.word-term.hl {
+  background: var(--highlight-word-bg) !important;
+  color: var(--highlight-word-color) !important;
+  border-radius: 3px;
+  padding: 1px 4px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pw, .kw, .word-term { cursor: pointer; }
+.pw:hover, .kw:hover, .word-term:hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 767px) {
+  .container { display: block; }
+  .left-pane { position: static; height: auto; overflow: visible; padding: 20px; }
+  .left-block { display: block !important; margin-bottom: 20px; }
+}
+
+/* ===== [절대 생략 금지] 인쇄 머리글/바닥글 완전 제거 ===== */
+@page {
+  size: A4;
+  margin: 15mm 10mm 15mm 10mm;
+}
+
+@media print {
+  .toolbar,
+  .font-size-control,
+  #theme-toggle,
+  #pdf-export,
+  #word-search,
+  #para-jump { display: none !important; }
+
+  body[data-printing="true"] .container { display: none !important; }
+
+  #print-container { display: block !important; }
+
+  .print-para-set {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 2em;
+    padding-bottom: 1.5em;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .print-para-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 0.5em;
+    color: #333;
+    border-left: 4px solid #8C6D46;
+    padding-left: 8px;
+  }
+
+  .print-section { margin-bottom: 1em; }
+  .print-section h3 {
+    font-size: 0.95em;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 3px;
+    margin-bottom: 5px;
+  }
+
+  .pw.hl, .kw.hl, .word-term.hl {
+    background: none !important;
+    color: inherit !important;
+  }
+  .pw, .kw, .word-term {
+    cursor: default !important;
+    text-decoration: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+  a[href]::after { content: "" !important; }
+}
+</style>
+</head>
+<body>
+<!-- 인쇄 시 머리글/바닥글이 보이면: 인쇄 대화상자 > 추가 설정 > "머리글 및 바닥글" 해제 -->
+<header class="toolbar">
+  <span class="toolbar-title">Satipaṭṭhānasutta 단어학습장</span>
+  <input type="search" id="word-search" placeholder="단어 검색 (예: sati)" aria-label="단어 검색">
+  <select id="para-jump" aria-label="문장 이동">
+    <option value="">문장 이동</option>
+    <option value="1">문장 1</option>
+    <option value="2">문장 2</option>
+    <option value="3">문장 3</option>
+    <option value="4">문장 4</option>
+    <option value="5">문장 5</option>
+  </select>
+  <div class="font-size-control">
+    <button id="font-dec" aria-label="글자 작게">A-</button>
+    <button id="font-inc" aria-label="글자 크게">A+</button>
+  </div>
+  <button id="theme-toggle" aria-pressed="false">다크모드</button>
+  <button id="pdf-export" aria-label="PDF 내보내기">📄 PDF</button>
+</header>
+
+<div class="container">
+  <aside class="left-pane">
+    <div class="left-block active" data-para="1" id="left-1">
+      <span class="para-no" onclick="document.getElementById('right-1').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 1</span>
+      <p class="pali-text">* <span class="pw" data-word="majjhima">Majjhima</span> <span class="pw" data-word="nikāya">Nikāya</span> <span class="pw" data-word="10">10</span>
+
+<span class="pw" data-word="satipaṭṭhānasutta">Satipaṭṭhānasutta</span></p>
+      <p class="ko-text"><span class="kw" data-word="majjhima">맛지마</span> <span class="kw" data-word="nikāya">니까야</span> <span class="kw" data-word="10">10</span> <span class="kw" data-word="satipaṭṭhānasuttaṃ">마음챙김의 확립 경</span>.</p>
+    </div>
+    <div class="left-block" data-para="2" id="left-2">
+      <span class="para-no" onclick="document.getElementById('right-2').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 2</span>
+      <p class="pali-text"><span class="pw" data-word="evaṁ">Evaṁ</span> <span class="pw" data-word="me">me</span> <span class="pw" data-word="sutaṁ">sutaṁ</span>—<span class="pw" data-word="ekaṁ">ekaṁ</span> <span class="pw" data-word="samayaṁ">samayaṁ</span> <span class="pw" data-word="bhagavā">bhagavā</span> <span class="pw" data-word="kurūsu">kurūsu</span> <span class="pw" data-word="viharati">viharati</span> <span class="pw" data-word="kammāsadhammaṁ">kammāsadhammaṁ</span> <span class="pw" data-word="nāma">nāma</span> <span class="pw" data-word="kurūnaṁ">kurūnaṁ</span> <span class="pw" data-word="nigamo">nigamo</span>. <span class="pw" data-word="tatra">Tatra</span> <span class="pw" data-word="kho">kho</span> <span class="pw" data-word="bhagavā">bhagavā</span> <span class="pw" data-word="bhikkhū">bhikkhū</span> <span class="pw" data-word="āmantesi">āmantesi</span>: “<span class="pw" data-word="bhikkhavo">bhikkhavo</span>”<span class="pw" data-word="ti">ti</span>.</p>
+      <p class="ko-text"><span class="kw" data-word="evaṁ">이와 같이</span> <span class="kw" data-word="me">나에 의해</span> <span class="kw" data-word="sutaṁ">들려졌다</span>. <span class="kw" data-word="samayaṁ">한때</span> <span class="kw" data-word="bhagavā">세존께서</span> <span class="kw" data-word="kurūnaṁ">꾸루국 사람들의</span> <span class="kw" data-word="nigamo">성읍인</span> <span class="kw" data-word="kammāsadhammaṁ">깜마사담마라</span> <span class="kw" data-word="nāma">불리는</span> 곳에서 <span class="kw" data-word="kurūsu">꾸루 사람들과 함께</span> <span class="kw" data-word="viharati">머무셨다</span>. <span class="kw" data-word="tatra">거기서</span> <span class="kw" data-word="kho">참으로</span> <span class="kw" data-word="bhagavā">세존께서</span> <span class="kw" data-word="bhikkhū">비구들을</span> <span class="kw" data-word="āmantesi">부르셨다</span>: "<span class="kw" data-word="bhikkhavo">비구들이여</span>"라고.</p>
+    </div>
+    <div class="left-block" data-para="3" id="left-3">
+      <span class="para-no" onclick="document.getElementById('right-3').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 3</span>
+      <p class="pali-text">“<span class="pw" data-word="bhadante">Bhadante</span>”<span class="pw" data-word="ti">ti</span> <span class="pw" data-word="te">te</span> <span class="pw" data-word="bhikkhū">bhikkhū</span> <span class="pw" data-word="bhagavato">bhagavato</span> <span class="pw" data-word="paccassosuṁ">paccassosuṁ</span>. <span class="pw" data-word="bhagavā">Bhagavā</span> <span class="pw" data-word="etadavoca">etadavoca</span>:</p>
+      <p class="ko-text">"<span class="kw" data-word="bhadante">세존이시여</span>"라고 그 <span class="kw" data-word="bhikkhū">비구들은</span> <span class="kw" data-word="bhagavato">세존께</span> <span class="kw" data-word="paccassosuṁ">대답했다</span>. <span class="kw" data-word="bhagavā">세존께서</span> <span class="kw" data-word="etadavoca">이것을 말씀하셨다</span>:</p>
+    </div>
+    <div class="left-block" data-para="4" id="left-4">
+      <span class="para-no" onclick="document.getElementById('right-4').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 4</span>
+      <p class="pali-text">“<span class="pw" data-word="ekāyano">Ekāyano</span> <span class="pw" data-word="ayaṁ">ayaṁ</span>, <span class="pw" data-word="bhikkhave">bhikkhave</span>, <span class="pw" data-word="maggo">maggo</span> <span class="pw" data-word="sattānaṁ">sattānaṁ</span> <span class="pw" data-word="visuddhiyā">visuddhiyā</span>, <span class="pw" data-word="sokaparidevānaṁ">sokaparidevānaṁ</span> <span class="pw" data-word="samatikkamāya">samatikkamāya</span>, <span class="pw" data-word="dukkhadomanassānaṁ">dukkhadomanassānaṁ</span> <span class="pw" data-word="atthaṅgamāya">atthaṅgamāya</span>, <span class="pw" data-word="ñāyassa">ñāyassa</span> <span class="pw" data-word="adhigamāya">adhigamāya</span>, <span class="pw" data-word="nibbānassa">nibbānassa</span> <span class="pw" data-word="sacchikiriyāya">sacchikiriyāya</span>, <span class="pw" data-word="yadidaṁ">yadidaṁ</span> <span class="pw" data-word="cattāro">cattāro</span> <span class="pw" data-word="satipaṭṭhānā">satipaṭṭhānā</span>.</p>
+      <p class="ko-text">"<span class="kw" data-word="bhikkhavo">비구들이여</span>, 이 <span class="kw" data-word="maggo">길은</span> <span class="kw" data-word="sattānaṁ">뭇 생명들의</span> <span class="kw" data-word="visuddhiyā">청정을 위한</span>, <span class="kw" data-word="sokaparidevānaṁ">슬픔과 비탄의</span> <span class="kw" data-word="samatikkamāya">초월을 위한</span>, <span class="kw" data-word="dukkhadomanassānaṁ">고통과 불만족의</span> <span class="kw" data-word="atthaṅgamāya">소멸을 위한</span>, <span class="kw" data-word="ñāyassa">진리의</span> <span class="kw" data-word="adhigamāya">도달을 위한</span>, <span class="kw" data-word="nibbānassa">열반의</span> <span class="kw" data-word="sacchikiriyāya">실현을 위한</span> <span class="kw" data-word="ekāyano">직접적인 길이니</span>, <span class="kw" data-word="yadidaṁ">그것은 곧</span> <span class="kw" data-word="cattāro">네 가지</span> <span class="kw" data-word="satipaṭṭhānā">마음챙김의 확립이다</span>.</p>
+    </div>
+    <div class="left-block" data-para="5" id="left-5">
+      <span class="para-no" onclick="document.getElementById('right-5').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 5</span>
+      <p class="pali-text"><span class="pw" data-word="katame">Katame</span> <span class="pw" data-word="cattāro">cattāro</span>? <span class="pw" data-word="idha">Idha</span>, <span class="pw" data-word="bhikkhave">bhikkhave</span>, <span class="pw" data-word="bhikkhu">bhikkhu</span> <span class="pw" data-word="kāye">kāye</span> <span class="pw" data-word="kāyānupassī">kāyānupassī</span> <span class="pw" data-word="viharati">viharati</span> <span class="pw" data-word="ātāpī">ātāpī</span> <span class="pw" data-word="sampajāno">sampajāno</span> <span class="pw" data-word="satimā">satimā</span>, <span class="pw" data-word="vineyya">vineyya</span> <span class="pw" data-word="loke">loke</span> <span class="pw" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</span>; <span class="pw" data-word="vedanāsu">vedanāsu</span> <span class="pw" data-word="vedanānupassī">vedanānupassī</span> <span class="pw" data-word="viharati">viharati</span> <span class="pw" data-word="ātāpī">ātāpī</span> <span class="pw" data-word="sampajāno">sampajāno</span> <span class="pw" data-word="satimā">satimā</span>, <span class="pw" data-word="vineyya">vineyya</span> <span class="pw" data-word="loke">loke</span> <span class="pw" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</span>; <span class="pw" data-word="citte">citte</span> <span class="pw" data-word="cittānupassī">cittānupassī</span> <span class="pw" data-word="viharati">viharati</span> <span class="pw" data-word="ātāpī">ātāpī</span> <span class="pw" data-word="sampajāno">sampajāno</span> <span class="pw" data-word="satimā">satimā</span>, <span class="pw" data-word="vineyya">vineyya</span> <span class="pw" data-word="loke">loke</span> <span class="pw" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</span>; <span class="pw" data-word="dhammesu">dhammesu</span> <span class="pw" data-word="dhammānupassī">dhammānupassī</span> <span class="pw" data-word="viharati">viharati</span> <span class="pw" data-word="ātāpī">ātāpī</span> <span class="pw" data-word="sampajāno">sampajāno</span> <span class="pw" data-word="satimā">satimā</span>, <span class="pw" data-word="vineyya">vineyya</span> <span class="pw" data-word="loke">loke</span> <span class="pw" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</span>.</p>
+      <p class="ko-text"><span class="kw" data-word="katame">어떤</span> <span class="kw" data-word="cattāro">네 가지인가</span>? <span class="kw" data-word="idha">여기에서</span>, <span class="kw" data-word="bhikkhavo">비구들이여</span>, <span class="kw" data-word="bhikkhu">비구는</span> <span class="kw" data-word="kāye">몸에서</span> <span class="kw" data-word="kāyānupassī">몸을 관찰하며</span> <span class="kw" data-word="viharati">머문다</span>, <span class="kw" data-word="ātāpī">열렬하고</span>, <span class="kw" data-word="sampajāno">분명히 알아차리고</span>, <span class="kw" data-word="satimā">마음챙기며</span>, <span class="kw" data-word="loke">세상에 대한</span> <span class="kw" data-word="abhijjhādomanassaṁ">탐욕과 정신적 고통을</span> <span class="kw" data-word="vineyya">제거하고서</span>. <span class="kw" data-word="vedanāsu">느낌들에서</span> <span class="kw" data-word="vedanānupassī">느낌을 관찰하며</span> <span class="kw" data-word="viharati">머문다</span>, <span class="kw" data-word="ātāpī">열렬하고</span>, <span class="kw" data-word="sampajāno">분명히 알아차리고</span>, <span class="kw" data-word="satimā">마음챙기며</span>, <span class="kw" data-word="loke">세상에 대한</span> <span class="kw" data-word="abhijjhādomanassaṁ">탐욕과 정신적 고통을</span> <span class="kw" data-word="vineyya">제거하고서</span>. <span class="kw" data-word="citte">마음에서</span> <span class="kw" data-word="cittānupassī">마음을 관찰하며</span> <span class="kw" data-word="viharati">머문다</span>, <span class="kw" data-word="ātāpī">열렬하고</span>, <span class="kw" data-word="sampajāno">분명히 알아차리고</span>, <span class="kw" data-word="satimā">마음챙기며</span>, <span class="kw" data-word="loke">세상에 대한</span> <span class="kw" data-word="abhijjhādomanassaṁ">탐욕과 정신적 고통을</span> <span class="kw" data-word="vineyya">제거하고서</span>. <span class="kw" data-word="dhammesu">법들에서</span> <span class="kw" data-word="dhammānupassī">법을 관찰하며</span> <span class="kw" data-word="viharati">머문다</span>, <span class="kw" data-word="ātāpī">열렬하고</span>, <span class="kw" data-word="sampajāno">분명히 알아차리고</span>, <span class="kw" data-word="satimā">마음챙기며</span>, <span class="kw" data-word="loke">세상에 대한</span> <span class="kw" data-word="abhijjhādomanassaṁ">탐욕과 정신적 고통을</span> <span class="kw" data-word="vineyya">제거하고서</span>.</p>
+    </div>
+  </aside>
+
+  <main class="right-pane">
+    <section class="right-block" data-para="1" id="right-1" tabindex="-1">
+      <h3>단어풀이</h3>
+      <ul class="word-list">
+<li><strong class="word-term" data-word="majjhima">majjhima</strong> <span class="pos">(majjhima. adj. m.sg.nom.)</span> — 중간의, 맛지마.</li>
+<li><strong class="word-term" data-word="nikāya">nikāya</strong> <span class="pos">(nikāya. m.sg.nom.)</span> — 모음, 니까야.</li>
+<li><strong class="word-term" data-word="10">10</strong> <span class="pos">(num.)</span> — 10.</li>
+<li><strong class="word-term" data-word="satipaṭṭhānasuttaṃ">satipaṭṭhānasuttaṃ</strong> <span class="pos">(satipaṭṭhānasutta. nt.sg.nom.)</span> — 마음챙김의 확립 경. [tappurisa 복합어]<ul>
+<li><strong class="sub-word-term">satipaṭṭhāna</strong> <span class="pos">(nt.)</span> — 마음챙김의 확립. [tappurisa 복합어]<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김, 알아차림.</li>
+<li><strong class="sub-word-term">upaṭṭhāna</strong> <span class="pos">(nt., upaṭṭhahati의 파생명사)</span> — 확립, 가까이 모심, 현전.<ul>
+<li><strong class="sub-word-term">upa</strong> <span class="pos">(접두어)</span> — 가까이, 곁에.</li>
+<li><strong class="sub-word-term">ṭhāna</strong> <span class="pos">(nt.)</span> — 서 있음, 확립.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">sutta</strong> <span class="pos">(nt.)</span> — 경전.</li>
+</ul>
+</li>
+</ul>
+      <h3>문장구조 및 특징</h3>
+      <p>경전의 제목과 번호를 나타내는 명사구로 이루어져 있다.</p>
+      
+    </section>
+    <section class="right-block" data-para="2" id="right-2" tabindex="-1">
+      <h3>단어풀이</h3>
+      <ul class="word-list">
+<li><strong class="word-term" data-word="evaṁ">evaṁ</strong> <span class="pos">(ind. adv.)</span> — 이와 같이.</li>
+<li><strong class="word-term" data-word="me">me</strong> <span class="pos">(ahaṃ. 1st.pron. sg.ins.)</span> — 나에 의해.</li>
+<li><strong class="word-term" data-word="sutaṁ">sutaṁ</strong> <span class="pos">(suta, suṇāti의 pp. nt.sg.nom.)</span> — 들려진 것, 들은 것.</li>
+<li><strong class="word-term" data-word="ekaṁ">ekaṁ</strong> <span class="pos">(eka. num. m.sg.acc.)</span> — 한, 어떤.</li>
+<li><strong class="word-term" data-word="samayaṁ">samayaṁ</strong> <span class="pos">(samaya. m.sg.acc.)</span> — 때, 시기를.</li>
+<li><strong class="word-term" data-word="bhagavā">bhagavā</strong> <span class="pos">(bhagavant. m.sg.nom.)</span> — 세존은.<ul>
+<li><strong class="sub-word-term">bhaga</strong> <span class="pos">(m.)</span> — 행운, 길상.</li>
+<li><strong class="sub-word-term">vant</strong> <span class="pos">(접미사)</span> — ~를 가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="kurūsu">kurūsu</strong> <span class="pos">(kuru. m.pl.loc.)</span> — 꾸루 사람들에게서, 꾸루국에.</li>
+<li><strong class="word-term" data-word="viharati">viharati</strong> <span class="pos">(vi + √har. 3rd.sg.pres.)</span> — 머물다, 지내다.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 특별하게, 분리하여.</li>
+<li><strong class="sub-word-term">harati</strong> <span class="pos">(√har)</span> — 나르다, 가져가다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="kammāsadhammaṁ">kammāsadhammaṁ</strong> <span class="pos">(kammāsadhamma. nt.sg.acc.)</span> — 깜마사담마에. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">kammāsa</strong> <span class="pos">(adj.)</span> — 얼룩진, 오점 있는.</li>
+<li><strong class="sub-word-term">dhamma</strong> <span class="pos">(m.)</span> — 법, 가르침, 성질.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="nāma">nāma</strong> <span class="pos">(ind. adv.)</span> — ~라는 이름의, 불리는.</li>
+<li><strong class="word-term" data-word="kurūnaṁ">kurūnaṁ</strong> <span class="pos">(kuru. m.pl.gen.)</span> — 꾸루 사람들의.</li>
+<li><strong class="word-term" data-word="nigamo">nigamo</strong> <span class="pos">(nigama. m.sg.nom.)</span> — 성읍은, 마을은.<ul>
+<li><strong class="sub-word-term">ni</strong> <span class="pos">(접두어)</span> — 아래로.</li>
+<li><strong class="sub-word-term">gama</strong> <span class="pos">(adj., gacchati의 파생)</span> — 가는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="tatra">tatra</strong> <span class="pos">(ind. adv.)</span> — 거기에서, 그곳에.</li>
+<li><strong class="word-term" data-word="kho">kho</strong> <span class="pos">(ind. emph.)</span> — 참으로, 실로.</li>
+<li><strong class="word-term" data-word="bhagavā">bhagavā</strong> <span class="pos">(bhagavant. m.sg.nom.)</span> — 세존은.<ul>
+<li><strong class="sub-word-term">bhaga</strong> <span class="pos">(m.)</span> — 행운, 길상.</li>
+<li><strong class="sub-word-term">vant</strong> <span class="pos">(접미사)</span> — ~를 가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="bhikkhū">bhikkhū</strong> <span class="pos">(bhikkhu. m.pl.acc.)</span> — 비구들을.</li>
+<li><strong class="word-term" data-word="āmantesi">āmantesi</strong> <span class="pos">(āmanteti의 aor. √mant. 3rd.sg.aor.)</span> — 부르셨다, 말씀하셨다.<ul>
+<li><strong class="sub-word-term">ā</strong> <span class="pos">(접두어)</span> — ~를 향하여, ~에게.</li>
+<li><strong class="sub-word-term">manteti</strong> <span class="pos">(√mant)</span> — 말하다, 부르다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="bhikkhavo">bhikkhavo</strong> <span class="pos">(bhikkhu. m.pl.voc.)</span> — 비구들이여.</li>
+<li><strong class="word-term" data-word="ti">ti</strong> <span class="pos">(ind. quot.)</span> — "~라고", 인용을 나타내는 불변화사.</li>
+</ul>
+      <h3>문장구조 및 특징</h3>
+      <p>이 문장은 불교 경전의 전형적인 도입부인 "Evaṁ me sutaṁ"(이와 같이 나는 들었다)으로 시작된다.<br>시간적 배경("ekaṁ samayaṁ")과 장소적 배경("kurūsu viharati kammāsadhammaṁ nāma kurūnaṁ nigamo")이 제시되며, 주어 "bhagavā"(세존)가 비구들에게 말을 거는 "āmantesi"를 통해 본문의 전개를 예고한다.<br>"bhikkhavo"ti는 직접 인용구이며, 'ti'가 그 끝을 나타낸다.</p>
+      
+    </section>
+    <section class="right-block" data-para="3" id="right-3" tabindex="-1">
+      <h3>단어풀이</h3>
+      <ul class="word-list">
+<li><strong class="word-term" data-word="bhadante">bhadante</strong> <span class="pos">(bhadanta. m.sg.voc.)</span> — 대덕이시여, 세존이시여.</li>
+<li><strong class="word-term" data-word="ti">ti</strong> <span class="pos">(ind. quot.)</span> — "~라고", 인용을 나타내는 불변화사.</li>
+<li><strong class="word-term" data-word="te">te</strong> <span class="pos">(ta. pron.dem. m.pl.nom.)</span> — 그들은.</li>
+<li><strong class="word-term" data-word="bhikkhū">bhikkhū</strong> <span class="pos">(bhikkhu. m.pl.nom.)</span> — 비구들은.</li>
+<li><strong class="word-term" data-word="bhagavato">bhagavato</strong> <span class="pos">(bhagavant. m.sg.dat.)</span> — 세존에게.<ul>
+<li><strong class="sub-word-term">bhaga</strong> <span class="pos">(m.)</span> — 행운, 길상.</li>
+<li><strong class="sub-word-term">vant</strong> <span class="pos">(접미사)</span> — ~를 가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="paccassosuṁ">paccassosuṁ</strong> <span class="pos">(paṭissuṇāti의 aor. √su. 3rd.pl.aor.)</span> — 대답했다, 응답했다.<ul>
+<li><strong class="sub-word-term">paṭi</strong> <span class="pos">(접두어)</span> — 향하여, 다시, 거스르며.</li>
+<li><strong class="sub-word-term">suṇāti</strong> <span class="pos">(√su)</span> — 듣다, 동의하다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="bhagavā">bhagavā</strong> <span class="pos">(bhagavant. m.sg.nom.)</span> — 세존은.<ul>
+<li><strong class="sub-word-term">bhaga</strong> <span class="pos">(m.)</span> — 행운, 길상.</li>
+<li><strong class="sub-word-term">vant</strong> <span class="pos">(접미사)</span> — ~를 가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="etadavoca">etadavoca</strong> <span class="pos">([etad + avoca]. 연성 결합형)</span> — 이것을 말씀하셨다.<ul>
+<li><strong class="sub-word-term">etad</strong> <span class="pos">(eta. pron.dem. nt.sg.acc.)</span> — 이것을.</li>
+<li><strong class="sub-word-term">avoca</strong> <span class="pos">(vacati의 aor. √vac. 3rd.sg.aor.)</span> — 말씀하셨다.</li>
+</ul>
+</li>
+</ul>
+      <h3>문장구조 및 특징</h3>
+      <p>비구들이 세존의 부름에 화답하는 문장과, 세존이 법문을 시작하는 문장으로 구성된다.<br>"Bhadante"ti는 대덕이시여라는 호격이 직접 인용된 것이며, 'ti'로 묶여 paccassosuṁ(대답했다)의 목적어가 된다.<br>etadavoca는 etad(이것을)와 avoca(말씀하셨다)가 결합된 형태로, 뒤에 이어지는 전체 설법을 목적어로 지시한다.</p>
+      
+    </section>
+    <section class="right-block" data-para="4" id="right-4" tabindex="-1">
+      <h3>단어풀이</h3>
+      <ul class="word-list">
+<li><strong class="word-term" data-word="ekāyano">ekāyano</strong> <span class="pos">(ekāyana. adj. m.sg.nom.)</span> — 하나의 길인, 직접적인(유일한) 길인. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">eka</strong> <span class="pos">(num.)</span> — 하나의, 유일한.</li>
+<li><strong class="sub-word-term">ayana</strong> <span class="pos">(nt., eti의 파생명사)</span> — 가는 것, 길, 방법.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ayaṁ">ayaṁ</strong> <span class="pos">(ima. pron.dem. m.sg.nom.)</span> — 이것은, 이.</li>
+<li><strong class="word-term" data-word="bhikkhave">bhikkhave</strong> <span class="pos">(bhikkhu. m.pl.voc.)</span> — 비구들이여.</li>
+<li><strong class="word-term" data-word="maggo">maggo</strong> <span class="pos">(magga. m.sg.nom.)</span> — 길은.</li>
+<li><strong class="word-term" data-word="sattānaṁ">sattānaṁ</strong> <span class="pos">(satta. m.pl.gen.)</span> — 중생들의, 생명들의.</li>
+<li><strong class="word-term" data-word="visuddhiyā">visuddhiyā</strong> <span class="pos">(visuddhi. f.sg.dat.)</span> — 청정을 위해서.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 완전히, 특별히.</li>
+<li><strong class="sub-word-term">suddhi</strong> <span class="pos">(f., sujjhati의 파생명사)</span> — 청정.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sokaparidevānaṁ">sokaparidevānaṁ</strong> <span class="pos">(sokaparideva. m.pl.gen.)</span> — 슬픔과 비탄의. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">soka</strong> <span class="pos">(m., socati의 파생명사)</span> — 슬픔.</li>
+<li><strong class="sub-word-term">parideva</strong> <span class="pos">(m., paridevati의 파생명사)</span> — 비탄, 통곡.<ul>
+<li><strong class="sub-word-term">pari</strong> <span class="pos">(접두어)</span> — 두루, 널리.</li>
+<li><strong class="sub-word-term">deva</strong> <span class="pos">(m., devati의 파생)</span> — 슬퍼함.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="samatikkamāya">samatikkamāya</strong> <span class="pos">(samatikkama. m.sg.dat.)</span> — 뛰어넘기 위해서, 초월을 위해서.<ul>
+<li><strong class="sub-word-term">sam</strong> <span class="pos">(접두어)</span> — 완전히, 함께.</li>
+<li><strong class="sub-word-term">ati</strong> <span class="pos">(접두어)</span> — 넘어서, 초월하여.</li>
+<li><strong class="sub-word-term">kkama</strong> <span class="pos">(m., kamati의 파생명사)</span> — 나아감, 걸음.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="dukkhadomanassānaṁ">dukkhadomanassānaṁ</strong> <span class="pos">(dukkhadomanassa. m.pl.gen.)</span> — 고통과 불만족의. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">dukkha</strong> <span class="pos">(nt.)</span> — 고통, 괴로움.</li>
+<li><strong class="sub-word-term">domanassa</strong> <span class="pos">(nt.)</span> — 정신적 고통, 불만족, 우울.<ul>
+<li><strong class="sub-word-term">do</strong> <span class="pos">(dur. 접두어)</span> — 나쁜.</li>
+<li><strong class="sub-word-term">manassa</strong> <span class="pos">(manas. nt.)</span> — 마음.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="atthaṅgamāya">atthaṅgamāya</strong> <span class="pos">(atthaṅgama. m.sg.dat.)</span> — 사라짐을 위해서, 소멸을 위해서. [tappurisa 복합어]<ul>
+<li><strong class="sub-word-term">atthaṁ</strong> <span class="pos">(attha. m.sg.acc.)</span> — 사라짐, 소멸.</li>
+<li><strong class="sub-word-term">gama</strong> <span class="pos">(m., gacchati의 파생명사)</span> — 가는 것, 도달.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ñāyassa">ñāyassa</strong> <span class="pos">(ñāya. m.sg.gen.)</span> — 바른 방법의, 진리의.</li>
+<li><strong class="word-term" data-word="adhigamāya">adhigamāya</strong> <span class="pos">(adhigama. m.sg.dat.)</span> — 도달을 위해서, 증득을 위해서.<ul>
+<li><strong class="sub-word-term">adhi</strong> <span class="pos">(접두어)</span> — 위에, 뛰어난.</li>
+<li><strong class="sub-word-term">gama</strong> <span class="pos">(m., gacchati의 파생명사)</span> — 가는 것, 도달.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="nibbānassa">nibbānassa</strong> <span class="pos">(nibbāna. nt.sg.gen.)</span> — 열반의, 깨달음의.<ul>
+<li><strong class="sub-word-term">ni</strong> <span class="pos">(접두어)</span> — 밖으로, 없는.</li>
+<li><strong class="sub-word-term">bāna</strong> <span class="pos">(vāna. nt., vāyati의 파생명사)</span> — 엮음, 갈애.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sacchikiriyāya">sacchikiriyāya</strong> <span class="pos">(sacchikiriyā. f.sg.dat.)</span> — 실현을 위해서. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">sacchi</strong> <span class="pos">(adj.)</span> — 눈앞에 있는, 직접적인.<ul>
+<li><strong class="sub-word-term">sa</strong> <span class="pos">(접두어)</span> — 함께, 가진.</li>
+<li><strong class="sub-word-term">acchi</strong> <span class="pos">(akkhi. nt.)</span> — 눈.</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">kiriyā</strong> <span class="pos">(f., karoti의 파생명사)</span> — 함, 행위.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="yadidaṁ">yadidaṁ</strong> <span class="pos">([yad + idaṁ]. 연성 결합형)</span> — 그것은 즉, 다시 말해.<ul>
+<li><strong class="sub-word-term">yad</strong> <span class="pos">(ya. pron.rel. nt.sg.nom.)</span> — 어떤 것은.</li>
+<li><strong class="sub-word-term">idaṁ</strong> <span class="pos">(ima. pron.dem. nt.sg.nom.)</span> — 이것은.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="cattāro">cattāro</strong> <span class="pos">(catu. num. m.pl.nom.)</span> — 네 가지의.</li>
+<li><strong class="word-term" data-word="satipaṭṭhānā">satipaṭṭhānā</strong> <span class="pos">(satipaṭṭhāna. nt.pl.nom.)</span> — 마음챙김의 확립들은. [tappurisa 복합어]<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김, 알아차림.</li>
+<li><strong class="sub-word-term">paṭṭhāna</strong> <span class="pos">(upaṭṭhāna. nt.)</span> — 확립, 나타남.<ul>
+<li><strong class="sub-word-term">upa</strong> <span class="pos">(접두어)</span> — 가까이.</li>
+<li><strong class="sub-word-term">ṭhāna</strong> <span class="pos">(nt.)</span> — 확립.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+      <h3>문장구조 및 특징</h3>
+      <p>이 문장은 "Ekāyano ayaṁ maggo" (이 길은 유일한/직접적인 길이다)라는 핵심 선언을 담고 있다.<br>이 길의 목적들을 나타내기 위해 여러 여격(dat.) 명사들(visuddhiyā, samatikkamāya, atthaṅgamāya, adhigamāya, sacchikiriyāya)이 병렬로 나열되어 목적(~하기 위해)을 명확히 제시한다.<br>마지막에 "yadidaṁ cattāro satipaṭṭhānā"(그것은 즉 네 가지 마음챙김의 확립이다)라는 동격 구문을 통해 그 길이 바로 사념처(satipaṭṭhāna)임을 밝힌다.</p>
+      
+    </section>
+    <section class="right-block" data-para="5" id="right-5" tabindex="-1">
+      <h3>단어풀이</h3>
+      <ul class="word-list">
+<li><strong class="word-term" data-word="katame">katame</strong> <span class="pos">(katama. pron.interr. m.pl.nom.)</span> — 어떤 것들이.</li>
+<li><strong class="word-term" data-word="cattāro">cattāro</strong> <span class="pos">(catu. num. m.pl.nom.)</span> — 네 가지가.</li>
+<li><strong class="word-term" data-word="idha">idha</strong> <span class="pos">(ind. adv.)</span> — 여기에서, 이 교법에서.</li>
+<li><strong class="word-term" data-word="bhikkhave">bhikkhave</strong> <span class="pos">(bhikkhu. m.pl.voc.)</span> — 비구들이여.</li>
+<li><strong class="word-term" data-word="bhikkhu">bhikkhu</strong> <span class="pos">(bhikkhu. m.sg.nom.)</span> — 비구는.</li>
+<li><strong class="word-term" data-word="kāye">kāye</strong> <span class="pos">(kāya. m.sg.loc.)</span> — 몸에서.</li>
+<li><strong class="word-term" data-word="kāyānupassī">kāyānupassī</strong> <span class="pos">(kāyānupassī. adj. m.sg.nom.)</span> — 몸을 관찰하는 자. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">kāya</strong> <span class="pos">(m.)</span> — 몸.</li>
+<li><strong class="sub-word-term">anupassī</strong> <span class="pos">(adj.)</span> — 관찰하는.<ul>
+<li><strong class="sub-word-term">anu</strong> <span class="pos">(접두어)</span> — 따라서.</li>
+<li><strong class="sub-word-term">passī</strong> <span class="pos">(adj.)</span> — 보는.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="viharati">viharati</strong> <span class="pos">(vi + √har. 3rd.sg.pres.)</span> — 머물다, 지내다.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 특별하게, 분리하여.</li>
+<li><strong class="sub-word-term">harati</strong> <span class="pos">(√har)</span> — 나르다, 거주하다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ātāpī">ātāpī</strong> <span class="pos">(ātāpī. adj. m.sg.nom.)</span> — 열렬한, 노력을 기울이는.<ul>
+<li><strong class="sub-word-term">ā</strong> <span class="pos">(접두어)</span> — 강하게.</li>
+<li><strong class="sub-word-term">tāpī</strong> <span class="pos">(adj., tapati의 파생)</span> — 태우는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sampajāno">sampajāno</strong> <span class="pos">(sampajāna. adj. m.sg.nom.)</span> — 분명히 아는.<ul>
+<li><strong class="sub-word-term">sam</strong> <span class="pos">(접두어)</span> — 완전히.</li>
+<li><strong class="sub-word-term">pa</strong> <span class="pos">(접두어)</span> — 강하게, 분명히.</li>
+<li><strong class="sub-word-term">jāno</strong> <span class="pos">(adj., jānāti의 파생)</span> — 아는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="satimā">satimā</strong> <span class="pos">(satimant. adj. m.sg.nom.)</span> — 마음챙기는.<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김.</li>
+<li><strong class="sub-word-term">mant</strong> <span class="pos">(접미사)</span> — ~가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="vineyya">vineyya</strong> <span class="pos">(vineti의 abs. √nī)</span> — 제거하고서, 없애고서.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 분리하여.</li>
+<li><strong class="sub-word-term">neyya</strong> <span class="pos">(nī의 파생)</span> — 이끌다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="loke">loke</strong> <span class="pos">(loka. m.sg.loc.)</span> — 세상에 대해.</li>
+<li><strong class="word-term" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</strong> <span class="pos">(abhijjhādomanassa. nt.sg.acc.)</span> — 탐욕과 정신적 고통을. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">abhijjhā</strong> <span class="pos">(f.)</span> — 탐욕, 갈망.<ul>
+<li><strong class="sub-word-term">abhi</strong> <span class="pos">(접두어)</span> — 향하여, 강하게.</li>
+<li><strong class="sub-word-term">jjhā</strong> <span class="pos">(jhāyati의 파생)</span> — 열망하다.</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">domanassa</strong> <span class="pos">(nt.)</span> — 정신적 고통, 불만족.<ul>
+<li><strong class="sub-word-term">do</strong> <span class="pos">(dur. 접두어)</span> — 나쁜.</li>
+<li><strong class="sub-word-term">manassa</strong> <span class="pos">(manas. nt.)</span> — 마음.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="vedanāsu">vedanāsu</strong> <span class="pos">(vedanā. f.pl.loc.)</span> — 느낌들에서.</li>
+<li><strong class="word-term" data-word="vedanānupassī">vedanānupassī</strong> <span class="pos">(vedanānupassī. adj. m.sg.nom.)</span> — 느낌을 관찰하는 자. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">vedanā</strong> <span class="pos">(f.)</span> — 느낌.</li>
+<li><strong class="sub-word-term">anupassī</strong> <span class="pos">(adj.)</span> — 관찰하는.<ul>
+<li><strong class="sub-word-term">anu</strong> <span class="pos">(접두어)</span> — 따라서.</li>
+<li><strong class="sub-word-term">passī</strong> <span class="pos">(adj.)</span> — 보는.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="viharati">viharati</strong> <span class="pos">(vi + √har. 3rd.sg.pres.)</span> — 머물다.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 특별하게.</li>
+<li><strong class="sub-word-term">harati</strong> <span class="pos">(√har)</span> — 거주하다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ātāpī">ātāpī</strong> <span class="pos">(ātāpī. adj. m.sg.nom.)</span> — 열렬한.<ul>
+<li><strong class="sub-word-term">ā</strong> <span class="pos">(접두어)</span> — 강하게.</li>
+<li><strong class="sub-word-term">tāpī</strong> <span class="pos">(adj., tapati의 파생)</span> — 태우는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sampajāno">sampajāno</strong> <span class="pos">(sampajāna. adj. m.sg.nom.)</span> — 분명히 아는.<ul>
+<li><strong class="sub-word-term">sam</strong> <span class="pos">(접두어)</span> — 완전히.</li>
+<li><strong class="sub-word-term">pa</strong> <span class="pos">(접두어)</span> — 강하게, 분명히.</li>
+<li><strong class="sub-word-term">jāno</strong> <span class="pos">(adj., jānāti의 파생)</span> — 아는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="satimā">satimā</strong> <span class="pos">(satimant. adj. m.sg.nom.)</span> — 마음챙기는.<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김.</li>
+<li><strong class="sub-word-term">mant</strong> <span class="pos">(접미사)</span> — ~가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="vineyya">vineyya</strong> <span class="pos">(vineti의 abs. √nī)</span> — 제거하고서.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 분리하여.</li>
+<li><strong class="sub-word-term">neyya</strong> <span class="pos">(nī의 파생)</span> — 이끌다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="loke">loke</strong> <span class="pos">(loka. m.sg.loc.)</span> — 세상에 대해.</li>
+<li><strong class="word-term" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</strong> <span class="pos">(abhijjhādomanassa. nt.sg.acc.)</span> — 탐욕과 정신적 고통을. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">abhijjhā</strong> <span class="pos">(f.)</span> — 탐욕, 갈망.<ul>
+<li><strong class="sub-word-term">abhi</strong> <span class="pos">(접두어)</span> — 향하여, 강하게.</li>
+<li><strong class="sub-word-term">jjhā</strong> <span class="pos">(jhāyati의 파생)</span> — 열망하다.</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">domanassa</strong> <span class="pos">(nt.)</span> — 정신적 고통, 불만족.<ul>
+<li><strong class="sub-word-term">do</strong> <span class="pos">(dur. 접두어)</span> — 나쁜.</li>
+<li><strong class="sub-word-term">manassa</strong> <span class="pos">(manas. nt.)</span> — 마음.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="citte">citte</strong> <span class="pos">(citta. nt.sg.loc.)</span> — 마음에서.</li>
+<li><strong class="word-term" data-word="cittānupassī">cittānupassī</strong> <span class="pos">(cittānupassī. adj. m.sg.nom.)</span> — 마음을 관찰하는 자. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">citta</strong> <span class="pos">(nt.)</span> — 마음.</li>
+<li><strong class="sub-word-term">anupassī</strong> <span class="pos">(adj.)</span> — 관찰하는.<ul>
+<li><strong class="sub-word-term">anu</strong> <span class="pos">(접두어)</span> — 따라서.</li>
+<li><strong class="sub-word-term">passī</strong> <span class="pos">(adj.)</span> — 보는.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="viharati">viharati</strong> <span class="pos">(vi + √har. 3rd.sg.pres.)</span> — 머물다.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 특별하게.</li>
+<li><strong class="sub-word-term">harati</strong> <span class="pos">(√har)</span> — 거주하다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ātāpī">ātāpī</strong> <span class="pos">(ātāpī. adj. m.sg.nom.)</span> — 열렬한.<ul>
+<li><strong class="sub-word-term">ā</strong> <span class="pos">(접두어)</span> — 강하게.</li>
+<li><strong class="sub-word-term">tāpī</strong> <span class="pos">(adj., tapati의 파생)</span> — 태우는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sampajāno">sampajāno</strong> <span class="pos">(sampajāna. adj. m.sg.nom.)</span> — 분명히 아는.<ul>
+<li><strong class="sub-word-term">sam</strong> <span class="pos">(접두어)</span> — 완전히.</li>
+<li><strong class="sub-word-term">pa</strong> <span class="pos">(접두어)</span> — 강하게, 분명히.</li>
+<li><strong class="sub-word-term">jāno</strong> <span class="pos">(adj., jānāti의 파생)</span> — 아는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="satimā">satimā</strong> <span class="pos">(satimant. adj. m.sg.nom.)</span> — 마음챙기는.<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김.</li>
+<li><strong class="sub-word-term">mant</strong> <span class="pos">(접미사)</span> — ~가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="vineyya">vineyya</strong> <span class="pos">(vineti의 abs. √nī)</span> — 제거하고서.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 분리하여.</li>
+<li><strong class="sub-word-term">neyya</strong> <span class="pos">(nī의 파생)</span> — 이끌다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="loke">loke</strong> <span class="pos">(loka. m.sg.loc.)</span> — 세상에 대해.</li>
+<li><strong class="word-term" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</strong> <span class="pos">(abhijjhādomanassa. nt.sg.acc.)</span> — 탐욕과 정신적 고통을. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">abhijjhā</strong> <span class="pos">(f.)</span> — 탐욕, 갈망.<ul>
+<li><strong class="sub-word-term">abhi</strong> <span class="pos">(접두어)</span> — 향하여, 강하게.</li>
+<li><strong class="sub-word-term">jjhā</strong> <span class="pos">(jhāyati의 파생)</span> — 열망하다.</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">domanassa</strong> <span class="pos">(nt.)</span> — 정신적 고통, 불만족.<ul>
+<li><strong class="sub-word-term">do</strong> <span class="pos">(dur. 접두어)</span> — 나쁜.</li>
+<li><strong class="sub-word-term">manassa</strong> <span class="pos">(manas. nt.)</span> — 마음.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="dhammesu">dhammesu</strong> <span class="pos">(dhamma. m.pl.loc.)</span> — 법들에서.</li>
+<li><strong class="word-term" data-word="dhammānupassī">dhammānupassī</strong> <span class="pos">(dhammānupassī. adj. m.sg.nom.)</span> — 법을 관찰하는 자. [kammadhāraya 복합어]<ul>
+<li><strong class="sub-word-term">dhamma</strong> <span class="pos">(m.)</span> — 법, 현상.</li>
+<li><strong class="sub-word-term">anupassī</strong> <span class="pos">(adj.)</span> — 관찰하는.<ul>
+<li><strong class="sub-word-term">anu</strong> <span class="pos">(접두어)</span> — 따라서.</li>
+<li><strong class="sub-word-term">passī</strong> <span class="pos">(adj.)</span> — 보는.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="viharati">viharati</strong> <span class="pos">(vi + √har. 3rd.sg.pres.)</span> — 머물다.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 특별하게.</li>
+<li><strong class="sub-word-term">harati</strong> <span class="pos">(√har)</span> — 거주하다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="ātāpī">ātāpī</strong> <span class="pos">(ātāpī. adj. m.sg.nom.)</span> — 열렬한.<ul>
+<li><strong class="sub-word-term">ā</strong> <span class="pos">(접두어)</span> — 강하게.</li>
+<li><strong class="sub-word-term">tāpī</strong> <span class="pos">(adj., tapati의 파생)</span> — 태우는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="sampajāno">sampajāno</strong> <span class="pos">(sampajāna. adj. m.sg.nom.)</span> — 분명히 아는.<ul>
+<li><strong class="sub-word-term">sam</strong> <span class="pos">(접두어)</span> — 완전히.</li>
+<li><strong class="sub-word-term">pa</strong> <span class="pos">(접두어)</span> — 강하게, 분명히.</li>
+<li><strong class="sub-word-term">jāno</strong> <span class="pos">(adj., jānāti의 파생)</span> — 아는.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="satimā">satimā</strong> <span class="pos">(satimant. adj. m.sg.nom.)</span> — 마음챙기는.<ul>
+<li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김.</li>
+<li><strong class="sub-word-term">mant</strong> <span class="pos">(접미사)</span> — ~가진.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="vineyya">vineyya</strong> <span class="pos">(vineti의 abs. √nī)</span> — 제거하고서.<ul>
+<li><strong class="sub-word-term">vi</strong> <span class="pos">(접두어)</span> — 분리하여.</li>
+<li><strong class="sub-word-term">neyya</strong> <span class="pos">(nī의 파생)</span> — 이끌다.</li>
+</ul>
+</li>
+<li><strong class="word-term" data-word="loke">loke</strong> <span class="pos">(loka. m.sg.loc.)</span> — 세상에 대해.</li>
+<li><strong class="word-term" data-word="abhijjhādomanassaṁ">abhijjhādomanassaṁ</strong> <span class="pos">(abhijjhādomanassa. nt.sg.acc.)</span> — 탐욕과 정신적 고통을. [dvanda 복합어]<ul>
+<li><strong class="sub-word-term">abhijjhā</strong> <span class="pos">(f.)</span> — 탐욕, 갈망.<ul>
+<li><strong class="sub-word-term">abhi</strong> <span class="pos">(접두어)</span> — 향하여, 강하게.</li>
+<li><strong class="sub-word-term">jjhā</strong> <span class="pos">(jhāyati의 파생)</span> — 열망하다.</li>
+</ul>
+</li>
+<li><strong class="sub-word-term">domanassa</strong> <span class="pos">(nt.)</span> — 정신적 고통, 불만족.<ul>
+<li><strong class="sub-word-term">do</strong> <span class="pos">(dur. 접두어)</span> — 나쁜.</li>
+<li><strong class="sub-word-term">manassa</strong> <span class="pos">(manas. nt.)</span> — 마음.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+      <h3>문장구조 및 특징</h3>
+      <p>사념처의 구체적인 네 가지(몸, 느낌, 마음, 법) 대상을 열거하며 각각에 대한 수행의 공통된 정형구를 반복하고 있다.<br>각 구문은 처격(loc. kāye, vedanāsu, citte, dhammesu)으로 관찰의 대상을 나타내고, 주격 형용사들(ātāpī sampajāno satimā)로 수행자의 마음가짐을 설명한다.<br>또한 절대사(abs.) 구문인 "vineyya loke abhijjhādomanassaṁ" (세상에 대한 탐욕과 불만족을 제거하고서)이 부대상황을 나타내며 각 관찰 행위를 수식하는 구조이다.</p>
+      
+    </section>
+  </main>
+</div>
+
+<script>
+// 1. IntersectionObserver (좌우 연동)
+const rightBlocks = document.querySelectorAll('.right-block');
+const leftBlocks  = document.querySelectorAll('.left-block');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const para = entry.target.dataset.para;
+      leftBlocks.forEach(lb => {
+        lb.classList.toggle('active', lb.dataset.para === para);
+      });
+      localStorage.setItem('lastPara:satipatthana', para);
+    }
+  });
+}, {
+  root: null,
+  rootMargin: '-50% 0px -50% 0px',
+  threshold: 0
+});
+
+rightBlocks.forEach(b => observer.observe(b));
+
+// 2. 초기 위치 복원
+window.addEventListener('DOMContentLoaded', () => {
+  const last = localStorage.getItem('lastPara:satipatthana');
+  const target = last && document.getElementById('right-' + last);
+  if (target) target.scrollIntoView({ block: 'start' });
+});
+
+// 3. 단어 검색
+const searchInput = document.getElementById('word-search');
+searchInput.addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('.word-list li').forEach(li => {
+    const match = !q || li.textContent.toLowerCase().includes(q);
+    li.style.display = match ? '' : 'none';
+    li.classList.toggle('search-hit', !!q && match);
+  });
+});
+
+// 4. 문장 이동
+document.getElementById('para-jump').addEventListener('change', (e) => {
+  if (!e.target.value) return;
+  const target = document.getElementById('right-' + e.target.value);
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// 5. 폰트 스케일
+let scale = 1;
+function setScale(v) {
+  scale = v;
+  document.documentElement.style.setProperty('--font-scale', v);
+  localStorage.setItem('fontScale', v);
+}
+document.getElementById('font-inc').onclick = () => setScale(Math.min(scale + 0.1, 1.9));
+document.getElementById('font-dec').onclick = () => setScale(Math.max(scale - 0.1, 0.8));
+
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('fontScale');
+  if (saved) setScale(parseFloat(saved));
+});
+
+// 6. 다크모드
+const themeBtn = document.getElementById('theme-toggle');
+themeBtn.addEventListener('click', () => {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? '' : 'dark';
+  themeBtn.setAttribute('aria-pressed', String(!isDark));
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+});
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') { 
+    document.documentElement.dataset.theme = 'dark'; 
+    themeBtn.setAttribute('aria-pressed', 'true'); 
+  }
+});
+
+// 7. 하이라이트 연동
+function clearAllHighlights() {
+  document.querySelectorAll('.pw.hl, .kw.hl, .word-term.hl')
+    .forEach(el => el.classList.remove('hl'));
+}
+
+function highlightWord(word) {
+  clearAllHighlights();
+  if(!word) return;
+  const lowerWord = word.toLowerCase();
+  const activeLeft = document.querySelector('.left-block.active');
+  if (!activeLeft) return;
+
+  activeLeft.querySelectorAll('.pali-text .pw').forEach(span => {
+    if (span.dataset.word.toLowerCase() === lowerWord) span.classList.add('hl');
+  });
+  activeLeft.querySelectorAll('.ko-text .kw').forEach(span => {
+    if (span.dataset.word.toLowerCase() === lowerWord) span.classList.add('hl');
+  });
+
+  const activePara = activeLeft.dataset.para;
+  const rightBlock = document.querySelector('.right-block[data-para="' + activePara + '"]');
+  if (rightBlock) {
+    rightBlock.querySelectorAll('.word-term').forEach(term => {
+      if (term.dataset.word.toLowerCase() === lowerWord) term.classList.add('hl');
+    });
+  }
+}
+
+document.querySelectorAll('.pw').forEach(span => {
+  span.addEventListener('click', () => highlightWord(span.dataset.word));
+});
+document.querySelectorAll('.kw').forEach(span => {
+  span.addEventListener('click', () => highlightWord(span.dataset.word));
+});
+document.querySelectorAll('.word-term').forEach(term => {
+  term.addEventListener('click', () => highlightWord(term.dataset.word));
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.pw, .kw, .word-term')) clearAllHighlights();
+});
+
+// 8. PDF 출력
+document.getElementById('pdf-export').addEventListener('click', () => {
+  const printContainer = document.createElement('div');
+  printContainer.id = 'print-container';
+
+  const leftBlocks = document.querySelectorAll('.left-block');
+  leftBlocks.forEach(lb => {
+    const para = lb.dataset.para;
+    const rb = document.querySelector('.right-block[data-para="' + para + '"]');
+
+    const section = document.createElement('section');
+    section.className = 'print-para-set';
+    section.dataset.para = para;
+
+    const paraNo = lb.querySelector('.para-no');
+    if (paraNo) {
+      const h2 = document.createElement('h2');
+      h2.className = 'print-para-title';
+      h2.textContent = paraNo.textContent;
+      section.appendChild(h2);
+    }
+
+    const pali = lb.querySelector('.pali-text');
+    if (pali) {
+      const div = document.createElement('div');
+      div.className = 'print-section print-pali';
+      div.innerHTML = '<h3>빨리어 원문</h3>' + pali.outerHTML;
+      section.appendChild(div);
+    }
+
+    const ko = lb.querySelector('.ko-text');
+    if (ko) {
+      const div = document.createElement('div');
+      div.className = 'print-section print-ko';
+      div.innerHTML = '<h3>한글직역</h3>' + ko.outerHTML;
+      section.appendChild(div);
+    }
+
+    if (rb) {
+      const div = document.createElement('div');
+      div.className = 'print-section print-right';
+      div.innerHTML = rb.innerHTML;
+      section.appendChild(div);
+    }
+
+    printContainer.appendChild(section);
+  });
+
+  document.body.dataset.printing = 'true';
+  document.body.appendChild(printContainer);
+
+  window.print();
+
+  document.body.removeChild(printContainer);
+  document.body.dataset.printing = '';
+});
+</script>
+</body>
+</html>
