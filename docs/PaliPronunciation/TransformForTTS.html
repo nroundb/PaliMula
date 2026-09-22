@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>음성파일 생성용 한글 변환기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root {
+  --bg-page: #FAF8F4;
+  --bg-left: #F3F0EA;
+  --bg-right: #FFFFFF;
+  --text-main: #2B2B28;
+  --text-sub: #6B6B63;
+  --border-color: #DAD5CB;
+  --accent: #8C6D46;
+  --highlight-bg: #FBF0D9;
+  --font-main: 'Pretendard Variable', 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-main);
+  font-family: var(--font-main);
+}
+
+.toolbar {
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 24px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.toolbar-title { font-weight: 700; font-size: 1.05rem; }
+.toolbar-sub { color: var(--text-sub); font-size: 0.85rem; }
+
+.container {
+  display: grid;
+  grid-template-columns: 5fr 5fr;
+  width: 100vw;
+  max-width: 100vw;
+  height: calc(100vh - 53px);
+}
+
+.left-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-left);
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.left-top {
+  flex: 1 1 60%;
+  min-height: 200px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-bottom {
+  flex: 1 1 40%;
+  border-top: 1px solid var(--border-color);
+  padding: 16px 20px 20px;
+  overflow-y: auto;
+}
+
+.right-pane {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-right);
+  padding: 20px 24px;
+  height: 100%;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+
+textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  resize: none;
+  background: var(--bg-right);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-family: var(--font-main);
+  font-size: 1.15rem;
+  line-height: 1.7;
+  padding: 14px 16px;
+}
+textarea:focus { outline: none; border-color: var(--accent); }
+
+.rule-heading {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin: 0 0 10px;
+}
+
+table.rule-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+table.rule-table th, table.rule-table td {
+  border: 1px solid var(--border-color);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+table.rule-table th {
+  color: var(--text-sub);
+  font-weight: 600;
+  background: var(--highlight-bg);
+}
+
+.copy-btn {
+  margin-top: 12px;
+  padding: 12px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  align-self: flex-end;
+  transition: opacity 0.2s;
+}
+.copy-btn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 767px) {
+  .container { display: block; height: auto; }
+  .left-pane, .right-pane { height: auto; min-height: 50vh; }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="toolbar-title">TTS 음성파일 생성용 변환기</span>
+  <span class="toolbar-sub">연결기호와 장음기호를 음성 생성기에 적합한 형태로 변환합니다.</span>
+</div>
+
+<div class="container">
+  <!-- 왼쪽 창 -->
+  <div class="left-pane">
+    <div class="left-top">
+      <label for="input">변환 전 한글 텍스트</label>
+      <textarea id="input" placeholder="여기에 변환할 텍스트를 붙여넣으세요...&#10;예: 까따마- 짜 사- — 빅카워-"></textarea>
+    </div>
+    <div class="left-bottom">
+      <p class="rule-heading">변환 규칙 정리</p>
+      <table class="rule-table">
+        <tr>
+          <th>구분</th>
+          <th>처리 방식</th>
+          <th>예시</th>
+        </tr>
+        <tr>
+          <td>연결기호 (—)</td>
+          <td>긴 줄표(em dash)를 삭제하고 앞 단어 끝에 마침표(.) 추가</td>
+          <td>단어 — 다음단어<br>➔ 단어. 다음단어</td>
+        </tr>
+        <tr>
+          <td>장음기호 (-)</td>
+          <td>짧은 붙임표(hyphen)를 바로 앞 음절의 모음 자모로 치환</td>
+          <td>까따마- ➔ 까따마ㅏ<br>사- ➔ 사ㅏ</td>
+        </tr>
+        <tr>
+          <td>장음기호 예외</td>
+          <td>특정 글자 뒤에 오는 장음기호는 지정된 자모로 특별 치환</td>
+          <td>요- ➔ 요ㅗ<br>유- ➔ 유ㅜ<br>웨- ➔ 웨ㅚ<br>와- ➔ 와ㅏ<br>워- ➔ 워ㅓ</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- 오른쪽 창 -->
+  <div class="right-pane">
+    <label for="output">변환 후 한글 텍스트 (TTS용)</label>
+    <textarea id="output" readonly placeholder="변환된 결과가 이곳에 실시간으로 표시됩니다."></textarea>
+    <button class="copy-btn" id="copyBtn">결과 복사하기</button>
+  </div>
+</div>
+
+<script>
+const inputEl = document.getElementById('input');
+const outputEl = document.getElementById('output');
+const copyBtn = document.getElementById('copyBtn');
+
+function convertForTTS(text) {
+  if (!text) return '';
+
+  // 1. 연결기호(—, em dash) 처리
+  // 주변 공백(\s*)까지 포함하여 '. '로 치환
+  let result = text.replace(/\s*—\s*/g, '. ');
+
+  // 2. 장음기호(-, hyphen) 변환
+  // 한글 음절 바로 뒤에 붙은 '-'를 찾아 처리
+  result = result.replace(/([가-힣])-/g, function(match, char) {
+    // 예외 규칙 먼저 적용
+    if (char === '요') return '요ㅗ';
+    if (char === '유') return '유ㅜ';
+    if (char === '웨') return '웨ㅚ';
+    if (char === '와') return '와ㅏ';
+    if (char === '워') return '워ㅓ';
+
+    // 일반 규칙: 글자의 유니코드에서 중성(모음) 인덱스를 추출
+    const code = char.charCodeAt(0) - 0xAC00;
+    
+    // 유효한 한글 완성형 인덱스(0 ~ 11171)인 경우에만 분해
+    if (code >= 0 && code <= 11171) {
+      // 종성(28개), 중성(21개) 구조를 이용해 중성 인덱스 계산
+      const medialIdx = Math.floor((code % (21 * 28)) / 28);
+      
+      // 중성(모음) 21개의 자모 배열
+      const JAMO_VOWELS = [
+        'ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ',
+        'ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'
+      ];
+      
+      return char + JAMO_VOWELS[medialIdx];
+    }
+
+    return match;
+  });
+
+  return result;
+}
+
+// 실시간 변환 이벤트
+inputEl.addEventListener('input', () => {
+  outputEl.value = convertForTTS(inputEl.value);
+});
+
+// 복사 버튼 기능
+copyBtn.addEventListener('click', () => {
+  if (outputEl.value) {
+    navigator.clipboard.writeText(outputEl.value).then(() => {
+      const originalText = copyBtn.innerText;
+      copyBtn.innerText = '✓ 복사 완료!';
+      setTimeout(() => {
+        copyBtn.innerText = originalText;
+      }, 2000);
+    });
+  }
+});
+</script>
+</body>
+</html>
