@@ -67,7 +67,7 @@ body {
 
 .toolbar-title { font-weight: bold; flex-grow: 1; }
 
-#pdf-export {
+#pdf-export, #mp4-download {
   background: var(--accent);
   color: #fff;
   border: none;
@@ -77,8 +77,11 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   transition: opacity 0.2s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
-#pdf-export:hover { opacity: 0.85; }
+#pdf-export:hover, #mp4-download:hover { opacity: 0.85; }
 
 .container {
   display: grid;
@@ -264,7 +267,10 @@ body {
 <body>
 <!-- 인쇄 시 머리글/바닥글이 보이면: 인쇄 대화상자 > 추가 설정 > "머리글 및 바닥글" 해제 -->
 <header class="toolbar">
-  <span class="toolbar-title">Satipaṭṭhānasutta 단어학습장</span>
+  <span class="toolbar-title">
+    Satipaṭṭhānasutta 단어학습장
+    <a id="mp4-download" href="WE_MN10/MN_10_01.mp4" download="MN_10_01.mp4" aria-label="MP4 다운로드" style="margin-left: 15px; vertical-align: middle;">독음 MP4 Download</a>
+  </span>
   <input type="search" id="word-search" placeholder="단어 검색 (예: sati)" aria-label="단어 검색">
   <select id="para-jump" aria-label="문장 이동">
     <option value="">문장 이동</option>
@@ -289,7 +295,7 @@ body {
       <p class="pali-text">* <span class="pw" data-word="majjhima">Majjhima</span> <span class="pw" data-word="nikāya">Nikāya</span> <span class="pw" data-word="10">10</span>
 
 <span class="pw" data-word="satipaṭṭhānasutta">Satipaṭṭhānasutta</span></p>
-      <p class="ko-text"><span class="kw" data-word="majjhima">맛지마</span> <span class="kw" data-word="nikāya">니까야</span> <span class="kw" data-word="10">10</span> <span class="kw" data-word="satipaṭṭhānasuttaṃ">마음챙김의 확립 경</span>.</p>
+      <p class="ko-text"><span class="kw" data-word="majjhima">맛지마</span> <span class="kw" data-word="nikāya">니까야</span> <span class="kw" data-word="10">10</span> <span class="kw" data-word="satipaṭṭhānasutta">마음챙김의 확립 경</span>.</p>
     </div>
     <div class="left-block" data-para="2" id="left-2">
       <span class="para-no" onclick="document.getElementById('right-2').scrollIntoView({ behavior: 'smooth', block: 'start' })">문장 2</span>
@@ -320,7 +326,7 @@ body {
 <li><strong class="word-term" data-word="majjhima">majjhima</strong> <span class="pos">(majjhima. adj. m.sg.nom.)</span> — 중간의, 맛지마.</li>
 <li><strong class="word-term" data-word="nikāya">nikāya</strong> <span class="pos">(nikāya. m.sg.nom.)</span> — 모음, 니까야.</li>
 <li><strong class="word-term" data-word="10">10</strong> <span class="pos">(num.)</span> — 10.</li>
-<li><strong class="word-term" data-word="satipaṭṭhānasuttaṃ">satipaṭṭhānasuttaṃ</strong> <span class="pos">(satipaṭṭhānasutta. nt.sg.nom.)</span> — 마음챙김의 확립 경. [tappurisa 복합어]<ul>
+<li><strong class="word-term" data-word="satipaṭṭhānasutta">satipaṭṭhānasutta</strong> <span class="pos">(satipaṭṭhānasutta. nt.sg.nom.)</span> — 마음챙김의 확립 경. [tappurisa 복합어]<ul>
 <li><strong class="sub-word-term">satipaṭṭhāna</strong> <span class="pos">(nt.)</span> — 마음챙김의 확립. [tappurisa 복합어]<ul>
 <li><strong class="sub-word-term">sati</strong> <span class="pos">(f.)</span> — 마음챙김, 알아차림.</li>
 <li><strong class="sub-word-term">upaṭṭhāna</strong> <span class="pos">(nt., upaṭṭhahati의 파생명사)</span> — 확립, 가까이 모심, 현전.<ul>
