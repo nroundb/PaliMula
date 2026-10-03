@@ -108,11 +108,52 @@ textarea:focus { outline: none; border-color: var(--accent); }
   margin: 0 0 10px;
 }
 
+/* 변환 방법 영역 */
+.method-box {
+  background: var(--bg-right);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  margin-bottom: 18px;
+  white-space: pre-wrap;
+}
+
+/* 접이식 섹션 */
+details.rule-section {
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+details.rule-section > summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+details.rule-section > summary::-webkit-details-marker { display: none; }
+details.rule-section > summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  color: var(--accent);
+  transition: transform 0.15s;
+}
+details.rule-section[open] > summary::before { transform: rotate(90deg); }
+.section-body { padding: 0 14px 14px; }
+
 table.rule-table {
   border-collapse: collapse;
   width: 100%;
-  margin-top: 10px;
+  margin-top: 4px;
   font-size: 0.85rem;
+  background: var(--bg-right);
 }
 table.rule-table th, table.rule-table td {
   border: 1px solid var(--border-color);
@@ -124,6 +165,14 @@ table.rule-table th {
   color: var(--text-sub);
   font-weight: 600;
   background: var(--highlight-bg);
+}
+table.rule-table code {
+  font-family: Consolas, 'D2Coding', monospace;
+  font-size: 0.82rem;
+  background: var(--bg-left);
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: pre-wrap;
 }
 
 .copy-btn {
@@ -164,29 +213,59 @@ table.rule-table th {
       <textarea id="input" placeholder="여기에 변환할 텍스트를 붙여넣으세요...&#10;예: 까따마- 짜 사- — 빅카워-"></textarea>
     </div>
     <div class="left-bottom">
-      <p class="rule-heading">변환 규칙 정리</p>
-      <table class="rule-table">
-        <tr>
-          <th>구분</th>
-          <th>처리 방식</th>
-          <th>예시</th>
-        </tr>
-        <tr>
-          <td>연결기호 (—)</td>
-          <td>긴 줄표(em dash)를 삭제하고 앞 단어 끝에 마침표(.) 추가</td>
-          <td>단어 — 다음단어<br>➔ 단어. 다음단어</td>
-        </tr>
-        <tr>
-          <td>장음기호 (-)</td>
-          <td>짧은 붙임표(hyphen)를 바로 앞 음절의 모음 자모로 치환</td>
-          <td>까따마- ➔ 까따마ㅏ<br>사- ➔ 사ㅏ</td>
-        </tr>
-        <tr>
-          <td>장음기호 예외</td>
-          <td>특정 글자 뒤에 오는 장음기호는 지정된 자모로 특별 치환</td>
-          <td>요- ➔ 요ㅗ<br>유- ➔ 유ㅜ<br>웨- ➔ 웨ㅚ<br>와- ➔ 와ㅏ<br>워- ➔ 워ㅓ</td>
-        </tr>
-      </table>
+
+      <!-- ▼ 변환 방법: 아래 문구를 HTML에서 직접 수정하세요 -->
+      <p class="rule-heading">Text-To-Speech(TTS) 변환 방법</p>
+      <div class="method-box" id="methodBox">
+        1."Pāli → 한글 독음 변환기"에서 "원문병기"해제 & "복모음(e,o)포함 표시" 변환후 copy <br>
+        2. 여기 상단 box에 paste <br>
+        3. ClipChamp TTS (순복, speed(0.9)) 변환
+      </div>
+
+      <!-- ▼ 일반 변환규칙 (접힘) -->
+      <details class="rule-section">
+        <summary>일반 변환규칙</summary>
+        <div class="section-body">
+          <table class="rule-table">
+            <tr>
+              <th>구분</th>
+              <th>처리 방식</th>
+              <th>예시</th>
+            </tr>
+            <tr>
+              <td>장음기호 (-)<br>단모음</td>
+              <td>짧은 붙임표(hyphen)를 바로 앞 음절의 모음 자모로 치환</td>
+              <td>까따마- ➔ 까따마ㅏ<br>사- ➔ 사ㅏ</td>
+            </tr>
+            <tr>
+              <td>장음기호 (-)<br>복모음 13개</td>
+              <td>복모음 구성 중 두 번째 모음을 추가<br>
+                ㅑ→ㅏ, ㅒ→ㅐ, ㅕ→ㅓ, ㅖ→ㅔ, ㅘ→ㅏ, ㅙ→ㅐ, ㅚ→ㅐ(예외), ㅛ→ㅗ, ㅝ→ㅓ, ㅞ→ㅔ, ㅟ→ㅣ, ㅠ→ㅜ, ㅢ→ㅣ</td>
+              <td>웨- ➔ 웨ㅔ<br>예- ➔ 예ㅔ<br>와- ➔ 와ㅏ<br>외- ➔ 외ㅐ</td>
+            </tr>
+          </table>
+        </div>
+      </details>
+
+      <!-- ▼ 특별 변환규칙 (접힘, 표는 SPECIAL_RULES 배열에서 자동 생성) -->
+      <details class="rule-section">
+        <summary>특별 변환규칙</summary>
+        <div class="section-body">
+          <table class="rule-table" id="specialTable">
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>찾을 패턴</th>
+                <th>바꿀 내용</th>
+                <th>설명</th>
+                <th>예시</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+
     </div>
   </div>
 
@@ -199,44 +278,123 @@ table.rule-table th {
 </div>
 
 <script>
+/* =====================================================================
+   특별 변환규칙 등록 방법
+   ---------------------------------------------------------------------
+   아래 SPECIAL_RULES 배열에 { ... }, 한 덩어리를 추가하면
+   (1) 변환에 바로 적용되고  (2) '특별 변환규칙' 표에도 자동으로 나타납니다.
+   위에서부터 순서대로 적용되며, 장음기호 변환보다 먼저 실행됩니다.
+
+   name    : 표에 표시할 구분 이름
+   pattern : 찾을 패턴 (regex: true 이면 정규식 문자열, false 이면 일반 글자)
+   flags   : 정규식 플래그 (생략하면 'g')
+   replace : 바꿀 내용 (정규식의 $1, $2 같은 그룹 참조 사용 가능)
+   desc    : 설명
+   example : 예시 (표 표시용)
+   ===================================================================== */
+const SPECIAL_RULES = [
+  {
+    name: '연결기호 (—)',
+    pattern: '\\s*—\\s*',
+    regex: true,
+    flags: 'g',
+    replace: '. ',
+    desc: '긴 줄표(em dash)와 주변 공백을 삭제하고 앞 단어 끝에 마침표(.) 추가',
+    example: '단어 — 다음단어 ➔ 단어. 다음단어'
+  },
+  {
+    name: '따옴표 + 띠',
+    pattern: '(["\u201C\u201D])띠(?![가-힣-])',
+    regex: true,
+    flags: 'g',
+    replace: '$1띠!',
+    desc: '쌍따옴표(", “, ”) 바로 뒤에 "띠"가 오고 "띠"로 끝나는 경우 "!" 추가 ("띠우다"처럼 이어지는 경우는 제외)',
+    example: '"띠 ➔ "띠!'
+  }
+  // 새 규칙은 위 규칙 뒤에 쉼표(,)를 찍고 아래에 추가하세요.
+];
+
 const inputEl = document.getElementById('input');
 const outputEl = document.getElementById('output');
 const copyBtn = document.getElementById('copyBtn');
 
+function escapeHTML(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// 특별 변환규칙 표 생성
+function renderSpecialTable() {
+  const tbody = document.querySelector('#specialTable tbody');
+  tbody.innerHTML = SPECIAL_RULES.map(r => `
+    <tr>
+      <td>${escapeHTML(r.name)}</td>
+      <td><code>${escapeHTML(r.pattern)}</code></td>
+      <td><code>${escapeHTML(r.replace)}</code></td>
+      <td>${escapeHTML(r.desc || '')}</td>
+      <td>${escapeHTML(r.example || '')}</td>
+    </tr>
+  `).join('');
+}
+
+// 특별 변환규칙 적용
+function applySpecialRules(text) {
+  let result = text;
+  for (const r of SPECIAL_RULES) {
+    try {
+      const re = r.regex
+        ? new RegExp(r.pattern, r.flags || 'g')
+        : new RegExp(escapeRegExp(r.pattern), r.flags || 'g');
+      result = result.replace(re, r.replace);
+    } catch (e) {
+      console.error('특별 변환규칙 오류:', r.name, e);
+    }
+  }
+  return result;
+}
+
+// 중성(모음) 21개 → 장음으로 붙일 모음
+// 단모음은 그대로, 복모음 13개는 구성 중 두 번째 모음 (ㅚ만 예외로 ㅐ)
+const LONG_VOWEL_MAP = [
+  'ㅏ', // ㅏ
+  'ㅐ', // ㅐ
+  'ㅏ', // ㅑ
+  'ㅐ', // ㅒ
+  'ㅓ', // ㅓ
+  'ㅔ', // ㅔ
+  'ㅓ', // ㅕ
+  'ㅔ', // ㅖ
+  'ㅗ', // ㅗ
+  'ㅏ', // ㅘ
+  'ㅐ', // ㅙ
+  'ㅐ', // ㅚ (예외)
+  'ㅗ', // ㅛ
+  'ㅜ', // ㅜ
+  'ㅓ', // ㅝ
+  'ㅔ', // ㅞ
+  'ㅣ', // ㅟ
+  'ㅜ', // ㅠ
+  'ㅡ', // ㅡ
+  'ㅣ', // ㅢ
+  'ㅣ'  // ㅣ
+];
+
 function convertForTTS(text) {
   if (!text) return '';
 
-  // 1. 연결기호(—, em dash) 처리
-  // 주변 공백(\s*)까지 포함하여 '. '로 치환
-  let result = text.replace(/\s*—\s*/g, '. ');
+  // 1. 특별 변환규칙 (연결기호 등) 먼저 적용
+  let result = applySpecialRules(text);
 
   // 2. 장음기호(-, hyphen) 변환
-  // 한글 음절 바로 뒤에 붙은 '-'를 찾아 처리
   result = result.replace(/([가-힣])-/g, function(match, char) {
-    // 예외 규칙 먼저 적용
-    if (char === '요') return '요ㅗ';
-    if (char === '유') return '유ㅜ';
-    if (char === '웨') return '웨ㅚ';
-    if (char === '와') return '와ㅏ';
-    if (char === '워') return '워ㅓ';
-
-    // 일반 규칙: 글자의 유니코드에서 중성(모음) 인덱스를 추출
     const code = char.charCodeAt(0) - 0xAC00;
-    
-    // 유효한 한글 완성형 인덱스(0 ~ 11171)인 경우에만 분해
     if (code >= 0 && code <= 11171) {
-      // 종성(28개), 중성(21개) 구조를 이용해 중성 인덱스 계산
       const medialIdx = Math.floor((code % (21 * 28)) / 28);
-      
-      // 중성(모음) 21개의 자모 배열
-      const JAMO_VOWELS = [
-        'ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ',
-        'ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'
-      ];
-      
-      return char + JAMO_VOWELS[medialIdx];
+      return char + LONG_VOWEL_MAP[medialIdx];
     }
-
     return match;
   });
 
@@ -260,6 +418,8 @@ copyBtn.addEventListener('click', () => {
     });
   }
 });
+
+renderSpecialTable();
 </script>
 </body>
 </html>
