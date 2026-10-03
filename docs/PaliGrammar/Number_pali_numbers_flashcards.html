@@ -24,8 +24,18 @@
     box-shadow:0 4px 18px rgba(25,52,89,.08);
     margin-bottom:18px;
   }
-  .top .title { font-weight:700; }
-  .score { font-weight:700; }
+  .top { gap:14px; }
+  .search { flex:1; min-width:0; position:relative; max-width:340px; }
+  .search input {
+    width:100%; font-family:inherit; font-size:15px; padding:9px 34px 9px 12px;
+    border:1px solid #cbd5e1; border-radius:9px; color:#193459; background:#f8fafc; outline:none;
+  }
+  .search input:focus { border-color:#193459; background:white; }
+  .search .clear {
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    border:none; background:none; color:#7b8794; font-size:18px; cursor:pointer; display:none; padding:2px 6px;
+  }
+  .score { font-weight:700; white-space:nowrap; }
   button { font-family: inherit; }
   .controls button {
     border:1px solid #cbd5e1; background:white; color:#193459;
@@ -97,7 +107,10 @@
   <div class="subtitle">빨리어를 보고 알맞은 숫자를 선택하세요.</div>
 
   <div class="top">
-    <div class="title">빨리어 → 숫자</div>
+    <div class="search">
+      <input id="searchInput" type="text" placeholder="검색 (숫자 또는 빨리어)" autocomplete="off" oninput="doSearch()">
+      <button class="clear" id="clearBtn" onclick="clearSearch(true)" aria-label="검색어 지우기">×</button>
+    </div>
     <div class="score">점수 <span id="score">0</span> / <span id="total">0</span></div>
   </div>
 
@@ -173,10 +186,12 @@ const fmt = n => n.toLocaleString("en-US");
 const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
 const $ = id => document.getElementById(id);
 
-let deck = [...cards];
+let deck = shuffle([...cards]);  // 기본값: 카드 섞기
 let index = 0;
 let results = new Map();   // 숫자 -> {choice, ok}
 let choicesMap = new Map(); // 숫자 -> 보기 배열
+let fillTimer = null;
+let searching = false;
 
 function getChoices(num) {
   if (!choicesMap.has(num)) {
@@ -197,6 +212,9 @@ function fillBack() {
 }
 
 function render() {
+  clearTimeout(fillTimer);
+  searching = false;
+  $("choices").style.display = "";
   const [num, pali] = deck[index];
   const r = results.get(num);
 
@@ -226,7 +244,7 @@ function render() {
     $("card").classList.add("flipped");
   } else {
     $("card").classList.remove("flipped");
-    setTimeout(fillBack, 300); // 뒤집히는 동안 정답이 미리 보이지 않도록 지연
+    fillTimer = setTimeout(fillBack, 300); // 뒤집히는 동안 정답이 미리 보이지 않도록 지연
   }
 
   updateStatus();
@@ -252,10 +270,11 @@ function updateStatus() {
 
 function setMsg(t) { $("msg").textContent = t; }
 
-function prevCard() { if (index > 0) { index--; setMsg(""); render(); } }
-function nextCard() { if (index < deck.length - 1) { index++; setMsg(""); render(); } }
+function prevCard() { clearSearch(); if (index > 0) { index--; setMsg(""); render(); } }
+function nextCard() { clearSearch(); if (index < deck.length - 1) { index++; setMsg(""); render(); } }
 
 function retryWrong() {
+  clearSearch();
   const wrong = deck.filter(c => { const r = results.get(c[0]); return r && !r.ok; });
   if (!wrong.length) { setMsg("틀린 문항이 없습니다."); return; }
   wrong.forEach(c => { results.delete(c[0]); choicesMap.delete(c[0]); });
@@ -266,6 +285,7 @@ function retryWrong() {
 }
 
 function resetAll(newDeck) {
+  clearSearch();
   deck = newDeck;
   results = new Map();
   choicesMap = new Map();
@@ -276,6 +296,57 @@ function resetAll(newDeck) {
 
 function restart() { resetAll([...cards]); }
 function shuffleCards() { resetAll(shuffle([...cards])); }
+
+// ---------- 검색 ----------
+const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+function findCard(q) {
+  if (/^[\d,\s]+$/.test(q)) {
+    const n = parseInt(q.replace(/[,\s]/g, ""), 10);
+    return cards.find(c => c[0] === n) || null;
+  }
+  const k = norm(q);
+  const exact = cards.find(c => norm(c[1]) === k);
+  if (exact) return exact;
+  const pre = cards.filter(c => norm(c[1]).startsWith(k));
+  return pre.length === 1 ? pre[0] : null;
+}
+
+function doSearch() {
+  const q = $("searchInput").value.trim();
+  $("clearBtn").style.display = q ? "block" : "none";
+  if (!q) { clearSearch(true); return; }
+
+  clearTimeout(fillTimer);
+  searching = true;
+  const found = findCard(q);
+  $("choices").style.display = "none";
+  $("pos").textContent = "(검색 결과)";
+  if (found) {
+    const [num, pali, desc] = found;
+    $("question").textContent = pali;
+    $("result").textContent = "";
+    $("answerPali").textContent = pali;
+    $("answerNum").textContent = fmt(num);
+    $("desc").textContent = desc;
+    $("backFace").className = "face back";
+  } else {
+    $("question").textContent = q;
+    $("result").textContent = "검색 결과 없음";
+    $("answerPali").textContent = "";
+    $("answerNum").textContent = "";
+    $("desc").textContent = "‘" + q + "’에 해당하는 숫자가 없습니다.";
+    $("backFace").className = "face back ng";
+  }
+  $("card").classList.add("flipped");
+}
+
+// 검색 상태 해제 (refresh=true면 퀴즈 화면으로 복귀)
+function clearSearch(refresh) {
+  $("searchInput").value = "";
+  $("clearBtn").style.display = "none";
+  if (refresh && searching) render();
+}
 
 render();
 </script>
