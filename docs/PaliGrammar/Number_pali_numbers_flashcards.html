@@ -15,10 +15,7 @@
     justify-content: center;
     min-height: 100vh;
   }
-  .app {
-    width: min(760px, 94vw);
-    padding: 28px 0 40px;
-  }
+  .app { width: min(760px, 94vw); padding: 28px 0 40px; }
   h1 { text-align:center; margin: 0 0 8px; font-size: 28px; }
   .subtitle { text-align:center; color:#667085; margin-bottom:22px; }
   .top {
@@ -27,17 +24,19 @@
     box-shadow:0 4px 18px rgba(25,52,89,.08);
     margin-bottom:18px;
   }
-  .mode button, .controls button {
-    border:1px solid #cbd5e1; background:white; color:#193459;
-    border-radius:9px; padding:9px 13px; cursor:pointer;
-    margin-right:5px;
-  }
-  button:hover { background:#edf3f9; }
-  .mode button.active { background:#193459; color:white; border-color:#193459; }
+  .top .title { font-weight:700; }
   .score { font-weight:700; }
+  button { font-family: inherit; }
+  .controls button {
+    border:1px solid #cbd5e1; background:white; color:#193459;
+    border-radius:9px; cursor:pointer;
+  }
+  .controls button:hover:not(:disabled) { background:#edf3f9; }
+  .controls button:disabled { opacity:.4; cursor:default; }
+
   .card-wrap { perspective: 1000px; }
   .card {
-    width:100%; height:330px; cursor:pointer; position:relative;
+    width:100%; height:330px; position:relative;
     transform-style:preserve-3d; transition:transform .55s;
   }
   .card.flipped { transform:rotateY(180deg); }
@@ -46,153 +45,239 @@
     background:white; border-radius:22px;
     box-shadow:0 10px 30px rgba(25,52,89,.12);
     display:flex; flex-direction:column; justify-content:center; align-items:center;
-    padding:25px;
+    padding:25px; text-align:center;
   }
   .back { transform:rotateY(180deg); background:#eef4fa; }
-  .label { font-size:14px; color:#7b8794; margin-bottom:16px; }
+  .back.ok { background:#e8f6ee; }
+  .back.ng { background:#fdecec; }
+  .label { font-size:14px; color:#7b8794; margin-bottom:12px; }
+  .result { font-size:16px; font-weight:700; margin-bottom:8px; }
+  .ok .result { color:#1b7f4b; }
+  .ng .result { color:#c0392b; }
+  .pali { font-size:34px; font-weight:700; color:#4a6285; }
   .main { font-size:64px; font-weight:800; letter-spacing:1px; }
-  .meaning { font-size:24px; margin-top:15px; }
+  .front .main { font-size:56px; }
+  .desc { margin-top:14px; font-size:16px; line-height:1.55; color:#475467; max-width:560px; }
   .hint { margin-top:18px; color:#7b8794; font-size:14px; }
+
+  .choices {
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:20px;
+  }
+  .choice {
+    border:2px solid #cbd5e1; background:white; color:#193459;
+    border-radius:12px; padding:14px; font-size:22px; font-weight:700; cursor:pointer;
+  }
+  .choice:hover:not(:disabled) { background:#edf3f9; }
+  .choice:disabled { cursor:default; }
+  .choice.correct { background:#e8f6ee; border-color:#1b7f4b; color:#1b7f4b; }
+  .choice.wrong { background:#fdecec; border-color:#c0392b; color:#c0392b; }
+
   .controls { display:flex; justify-content:center; gap:8px; margin-top:20px; flex-wrap:wrap; }
-  .controls button { font-size:16px; padding:11px 18px; }
+  .controls button { font-size:15px; padding:11px 16px; }
   .primary { background:#193459 !important; color:white !important; border-color:#193459 !important; }
-  .progress { margin-top:18px; }
+  .msg { text-align:center; min-height:22px; margin-top:12px; color:#667085; font-size:14px; }
+
+  .progress { margin-top:14px; }
   .bar { height:8px; background:#dce4ec; border-radius:99px; overflow:hidden; }
   .bar > div { height:100%; background:#193459; width:0%; transition:width .3s; }
-  .stats {
-    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px;
-  }
-  .stat { background:white; border-radius:12px; padding:14px; text-align:center; }
-  .stat b { display:block; font-size:22px; margin-top:4px; }
-  .note { margin-top:20px; font-size:13px; color:#667085; line-height:1.6; }
+
   @media(max-width:520px) {
-    .main {font-size:48px;} .card {height:290px;}
-    .top {flex-direction:column; gap:10px;}
+    .front .main { font-size:42px; }
+    .main { font-size:48px; }
+    .pali { font-size:28px; }
+    .card { height:310px; }
+    .desc { font-size:14px; }
+    .controls button { flex:1 1 30%; padding:11px 8px; font-size:14px; }
   }
 </style>
 </head>
 <body>
 <div class="app">
   <h1>빨리어 숫자 플래시카드</h1>
-  <div class="subtitle">카드를 클릭하여 정답을 확인하세요.</div>
+  <div class="subtitle">빨리어를 보고 알맞은 숫자를 선택하세요.</div>
 
   <div class="top">
-    <div class="mode">
-      <button id="modeNum" class="active" onclick="setMode('num')">숫자 → 빨리어</button>
-      <button id="modePali" onclick="setMode('pali')">빨리어 → 숫자</button>
-    </div>
+    <div class="title">빨리어 → 숫자</div>
     <div class="score">점수 <span id="score">0</span> / <span id="total">0</span></div>
   </div>
 
   <div class="card-wrap">
-    <div class="card" id="card" onclick="flipCard()">
+    <div class="card" id="card">
       <div class="face front">
-        <div class="label">문제</div>
-        <div class="main" id="question">1</div>
-        <div class="hint">카드를 클릭하면 정답이 나타납니다.</div>
+        <div class="label">문제 <span id="pos"></span></div>
+        <div class="main" id="question"></div>
+        <div class="hint">아래 보기 중 정답을 선택하세요.</div>
       </div>
-      <div class="face back">
-        <div class="label">정답</div>
-        <div class="main" id="answer">eka</div>
-        <div class="meaning" id="meaning">1</div>
-        <div class="hint">다음 카드로 넘어가려면 아래 버튼을 누르세요.</div>
+      <div class="face back" id="backFace">
+        <div class="result" id="result"></div>
+        <div class="pali" id="answerPali"></div>
+        <div class="main" id="answerNum"></div>
+        <div class="desc" id="desc"></div>
       </div>
     </div>
   </div>
 
+  <div class="choices" id="choices"></div>
+
   <div class="controls">
-    <button onclick="mark(false)">다시 보기</button>
-    <button class="primary" onclick="mark(true)">알았음</button>
-    <button onclick="nextCard()">다음 카드 →</button>
+    <button id="btnPrev" onclick="prevCard()">← 이전카드</button>
+    <button id="btnNext" class="primary" onclick="nextCard()">다음카드 →</button>
+    <button onclick="retryWrong()">틀린문항반복</button>
+    <button onclick="restart()">처음부터</button>
     <button onclick="shuffleCards()">카드 섞기</button>
   </div>
+  <div class="msg" id="msg"></div>
 
   <div class="progress">
     <div class="bar"><div id="bar"></div></div>
   </div>
-
-  <div class="stats">
-    <div class="stat">현재 카드<b id="current">1</b></div>
-    <div class="stat">정답<b id="correct">0</b></div>
-    <div class="stat">정답률<b id="rate">0%</b></div>
-  </div>
-
-  <div class="note">
-    <strong style="color: red;">[개선할 사항]</strong><br>
-    - 학습 범위: 20이상의 숫자 중에서 가장 많이 사용되는 빨리어 숫자 추가. <br>
-    - 특정 숫자에 대해 바로가기 버튼 추가
-    - "숫자 -> 빨리어"탭 삭제: 빨리어를 보고 숫자를 알면 되므로 "빨리어 -> 숫자"로 단순화 <br>
-    - 빨리어 문제 화면에서 하단에 객관식 보기 버튼을 추가하고 해당 버튼을 누르면 카드가 뒤집어지면서 정답여부 자동체크 <br>
-    - 하단의 버튼을 "다시보기, 알았음, 다음카드, 카드 섞기" -> "이전카드, 다음카드, "틀린문항반복", "처음부터", 카드 섞기"로 변경 <br>
-    - 하단의 "현재카드, 정답, 정답률" 버튼 삭제
-    - 카드 정답에서 빨리어가 상단, 숫자가 중간, 하단에 해당 숫자에 대한 간단한 설명 추가
-  </div>
 </div>
 
 <script>
+// [숫자, 빨리어, 설명]
 const cards = [
-  [0,"suñña"], [1,"eka"], [2,"dve"], [3,"tayo"], [4,"cattāri"],
-  [5,"pañca"], [6,"cha"], [7,"satta"], [8,"aṭṭha"], [9,"nava"],
-  [10,"dasa"], [11,"ekādasa"], [12,"dvādasa"], [13,"terasa"],
-  [14,"cuddasa"], [15,"pañcadasa"], [16,"soḷasa"], [17,"sattarasa"],
-  [18,"aṭṭhārasa"], [19,"ekūnavīsati"], [20,"vīsati"]
+  [0,"suñña","‘텅 빔(공)’이라는 뜻이며, 숫자 0을 나타낼 때도 쓰입니다."],
+  [1,"eka","‘하나’. ‘홀로, 유일한’이라는 의미로도 쓰입니다."],
+  [2,"dve","‘둘’. 복합어에서는 dvi-, du- 형태로 나타납니다."],
+  [3,"tayo","‘셋’(남성형). 복합어에서는 ti- 형태로 쓰입니다. (예: 삼보 ti-ratana)"],
+  [4,"cattāri","‘넷’(중성형). 사성제(cattāri ariyasaccāni)에 쓰입니다."],
+  [5,"pañca","‘다섯’. 오계(pañca-sīla), 오온(pañcakkhandha)에 쓰입니다."],
+  [6,"cha","‘여섯’. 육처(saḷāyatana)처럼 합성어에서는 saḷ- 형태가 되기도 합니다."],
+  [7,"satta","‘일곱’. 칠각지(satta bojjhaṅga)에 쓰입니다."],
+  [8,"aṭṭha","‘여덟’. 팔정도(aṭṭhaṅgika magga)에 쓰입니다."],
+  [9,"nava","‘아홉’. ‘새로운’을 뜻하는 nava와 형태가 같습니다."],
+  [10,"dasa","‘열’. 십바라밀(dasa pāramī), 십선업 등에 쓰입니다."],
+  [11,"ekādasa","eka(1) + dasa(10)가 결합한 ‘열하나’."],
+  [12,"dvādasa","dva(2) + dasa(10)가 결합한 ‘열둘’. 십이연기(dvādasa aṅga)에 쓰입니다."],
+  [13,"terasa","‘열셋’. 3 + 10이지만 형태가 변해 tayodasa가 아닌 terasa가 됩니다."],
+  [14,"cuddasa","‘열넷’. catu(4) + dasa(10)가 변한 형태입니다."],
+  [15,"pañcadasa","pañca(5) + dasa(10)로 이루어진 ‘열다섯’."],
+  [16,"soḷasa","‘열여섯’. cha 대신 soḷa-라는 특수한 형태를 씁니다."],
+  [17,"sattarasa","satta(7) + rasa. 11~18에서는 dasa가 rasa로 바뀌는 경우가 많습니다."],
+  [18,"aṭṭhārasa","aṭṭha(8) + rasa로 이루어진 ‘열여덟’."],
+  [19,"ekūnavīsati","‘20에서 1이 모자란 수’. eka + ūna(모자란) + vīsati."],
+  [20,"vīsati","‘스물’. 20부터 십 단위 수는 -ti, -sa 등의 어미로 끝나는 경우가 많습니다."],
+  [30,"tiṃsati","‘서른’. 삼십삼천(tāvatiṃsa)이라는 말에 쓰입니다."],
+  [40,"cattālīsa","‘마흔’. cattāri(4)에서 파생된 십 단위 수입니다."],
+  [50,"paññāsa","‘쉰’. 맛지마 니까야의 ‘50경 묶음(paṇṇāsa)’ 이름에 쓰입니다."],
+  [60,"saṭṭhi","‘예순’. cha(6)와 형태가 많이 달라 따로 외워야 합니다."],
+  [70,"sattati","‘일흔’. satta(7)에서 파생된 십 단위 수입니다."],
+  [80,"asīti","‘여든’. 부처님의 나이 80세, 80대제자(asīti mahāsāvaka)와 관련됩니다."],
+  [90,"navuti","‘아흔’. nava(9)와 닮았지만 어미가 다릅니다."],
+  [100,"sata","‘백’. 큰 수를 나타내는 기본 단위입니다."],
+  [1000,"sahassa","‘천’. 경전에서 ‘매우 많은 수’를 나타내는 표현으로도 자주 쓰입니다."],
+  [100000,"satasahassa","sata(백) × sahassa(천) = ‘십만’. lakkha라고도 합니다."]
 ];
+
+const fmt = n => n.toLocaleString("en-US");
+const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; };
+const $ = id => document.getElementById(id);
 
 let deck = [...cards];
 let index = 0;
-let mode = "num";
-let flipped = false;
-let score = 0;
-let answered = 0;
-let correct = 0;
+let results = new Map();   // 숫자 -> {choice, ok}
+let choicesMap = new Map(); // 숫자 -> 보기 배열
 
-function updateCard() {
+function getChoices(num) {
+  if (!choicesMap.has(num)) {
+    const others = shuffle(cards.map(c => c[0]).filter(n => n !== num)).slice(0, 3);
+    choicesMap.set(num, shuffle([num, ...others]));
+  }
+  return choicesMap.get(num);
+}
+
+function fillBack() {
+  const [num, pali, desc] = deck[index];
+  const r = results.get(num);
+  $("answerPali").textContent = pali;
+  $("answerNum").textContent = fmt(num);
+  $("desc").textContent = desc;
+  $("result").textContent = r ? (r.ok ? "✔ 정답입니다!" : "✘ 오답입니다 (선택: " + fmt(r.choice) + ")") : "";
+  $("backFace").className = "face back" + (r ? (r.ok ? " ok" : " ng") : "");
+}
+
+function render() {
   const [num, pali] = deck[index];
-  document.getElementById("question").textContent = mode === "num" ? num : pali;
-  document.getElementById("answer").textContent = mode === "num" ? pali : num;
-  document.getElementById("meaning").textContent = mode === "num" ? num : pali;
-  document.getElementById("card").classList.remove("flipped");
-  flipped = false;
-  document.getElementById("current").textContent = index + 1;
-  document.getElementById("total").textContent = deck.length;
-  document.getElementById("bar").style.width = ((index + 1) / deck.length * 100) + "%";
+  const r = results.get(num);
+
+  $("question").textContent = pali;
+  $("pos").textContent = "(" + (index + 1) + " / " + deck.length + ")";
+
+  // 보기 버튼
+  const box = $("choices");
+  box.innerHTML = "";
+  getChoices(num).forEach(opt => {
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.textContent = fmt(opt);
+    if (r) {
+      b.disabled = true;
+      if (opt === num) b.classList.add("correct");
+      else if (opt === r.choice) b.classList.add("wrong");
+    } else {
+      b.onclick = () => answer(opt);
+    }
+    box.appendChild(b);
+  });
+
+  // 카드 앞/뒤
+  if (r) {
+    fillBack();
+    $("card").classList.add("flipped");
+  } else {
+    $("card").classList.remove("flipped");
+    setTimeout(fillBack, 300); // 뒤집히는 동안 정답이 미리 보이지 않도록 지연
+  }
+
+  updateStatus();
 }
 
-function flipCard() {
-  document.getElementById("card").classList.toggle("flipped");
-  flipped = !flipped;
+function answer(choice) {
+  const num = deck[index][0];
+  if (results.has(num)) return;
+  results.set(num, { choice, ok: choice === num });
+  setMsg("");
+  render();
 }
 
-function nextCard() {
-  index = (index + 1) % deck.length;
-  updateCard();
+function updateStatus() {
+  let score = 0;
+  deck.forEach(c => { const r = results.get(c[0]); if (r && r.ok) score++; });
+  $("score").textContent = score;
+  $("total").textContent = deck.length;
+  $("bar").style.width = ((index + 1) / deck.length * 100) + "%";
+  $("btnPrev").disabled = index === 0;
+  $("btnNext").disabled = index === deck.length - 1;
 }
 
-function mark(isCorrect) {
-  if (!flipped) { flipCard(); return; }
-  answered++;
-  if (isCorrect) { correct++; score++; }
-  document.getElementById("score").textContent = score;
-  document.getElementById("correct").textContent = correct;
-  document.getElementById("rate").textContent =
-    answered ? Math.round(correct / answered * 100) + "%" : "0%";
-  nextCard();
-}
+function setMsg(t) { $("msg").textContent = t; }
 
-function setMode(newMode) {
-  mode = newMode;
-  document.getElementById("modeNum").classList.toggle("active", mode === "num");
-  document.getElementById("modePali").classList.toggle("active", mode === "pali");
-  updateCard();
-}
+function prevCard() { if (index > 0) { index--; setMsg(""); render(); } }
+function nextCard() { if (index < deck.length - 1) { index++; setMsg(""); render(); } }
 
-function shuffleCards() {
-  deck.sort(() => Math.random() - 0.5);
+function retryWrong() {
+  const wrong = deck.filter(c => { const r = results.get(c[0]); return r && !r.ok; });
+  if (!wrong.length) { setMsg("틀린 문항이 없습니다."); return; }
+  wrong.forEach(c => { results.delete(c[0]); choicesMap.delete(c[0]); });
+  deck = wrong;
   index = 0;
-  updateCard();
+  setMsg("틀린 문항 " + wrong.length + "개를 다시 풉니다.");
+  render();
 }
 
-updateCard();
+function resetAll(newDeck) {
+  deck = newDeck;
+  results = new Map();
+  choicesMap = new Map();
+  index = 0;
+  setMsg("");
+  render();
+}
+
+function restart() { resetAll([...cards]); }
+function shuffleCards() { resetAll(shuffle([...cards])); }
+
+render();
 </script>
 </body>
 </html>
