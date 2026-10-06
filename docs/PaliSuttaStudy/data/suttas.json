@@ -1,0 +1,13 @@
+{
+  "version": "2026-10-06",
+  "suttas": [
+    {
+      "id": "mn10",
+      "title": "Satipaṭṭhānasutta",
+      "subtitle": "맛지마 니까야 10 · 마음챙김의 확립 경",
+      "sections": [
+        { "id": "01", "file": "mn10/01.md", "label": "서문", "paras": [1, 5] }
+      ]
+    }
+  ]
+}
