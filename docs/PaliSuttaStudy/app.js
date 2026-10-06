@@ -102,17 +102,18 @@
     document.fonts && document.fonts.ready.then(fit);
     const first = pn && $('#right-' + pn) ? pn : paras[0].no;
     if (wide) {
-      io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) activate(e.target.dataset.para); }), { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
+      io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) activate(e.target.dataset.para); }), { root: $('.right-pane'), rootMargin: '-50% 0px -50% 0px', threshold: 0 });
       $$('.right-block').forEach(b => io.observe(b));
     }
     activate(first);
     if (pn && $('#right-' + pn)) $('#right-' + pn).scrollIntoView({ block: 'start' });
-    else scrollTo(0, 0);
+    else { const rp = $('.right-pane'); if (rp) rp.scrollTop = 0; }
   }
 
   // 활성 문단: 좌측 블록 전환 + 이동 목록 동기화 + 읽던 위치 저장
   function activate(n) {
     $$('.left-block').forEach(l => l.classList.toggle('active', l.dataset.para == n));
+    const lp = $('.left-pane'); if (lp) lp.scrollTop = 0;
     const pj = $('#para-jump'); if (pj) pj.value = n;
     clearTimeout(saveT);
     saveT = setTimeout(() => curr && store('lastPos:' + curr.s.id, { section: curr.s.sections[curr.i].id, para: +n }), 300);
