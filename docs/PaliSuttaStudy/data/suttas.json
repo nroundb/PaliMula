@@ -6,7 +6,8 @@
       "title": "Satipaṭṭhānasutta",
       "subtitle": "맛지마 니까야 10 · 마음챙김의 확립 경",
       "sections": [
-        { "id": "01", "file": "mn10/01.md", "label": "서문", "paras": [1, 5] }
+        { "id": "01", "file": "mn10/01.md", "label": "서문", "paras": [1, 5] },
+        { "id": "02", "file": "mn10/02.md", "label": "신념처 (1)", "paras": [6, 19] }
       ]
     }
   ]
