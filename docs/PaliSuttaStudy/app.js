@@ -93,7 +93,7 @@
       nav(s.sections[i - 1], '◀') + nav(next, '▶') +
       `<input type="search" id="word-search" placeholder="단어 검색 (예: sati)" aria-label="단어 검색">` +
       `<select id="para-jump" aria-label="문단 이동"><option value="">문단 이동</option>${paras.map(p => `<option value="${p.no}">문단 ${p.no}</option>`).join('')}</select>` +
-      `<div class="font-size-control"><button id="font-dec" aria-label="글자 작게">A-</button><button id="font-inc" aria-label="글자 크게">A+</button></div>${THEME_BTN}<button id="pdf-export">PDF</button></header>` +
+      `<div class="font-size-control"><button id="font-dec" aria-label="글자 작게">A-</button><button id="font-inc" aria-label="글자 크게">A+</button></div>${THEME_BTN}<button id="pdf-export">PDF</button><button id="audio-download">독송다운로드</button></header>` +
       `<div class="container"><aside class="left-pane">${paras.map(leftHtml).join('')}</aside><main class="right-pane">${paras.map(rightHtml).join('')}` +
       `<div class="next-wrap">${next ? `<a class="btn" href="#/${s.id}/${next.id}"><strong>다음 section ▶</strong><span>${esc(next.label)}</span></a>` : `<a class="btn" href="#/${s.id}"><strong>section 목록으로</strong></a>`}</div></main></div>` +
       (debug ? dbgPanel(data, s, sec) : '');
@@ -161,6 +161,18 @@
       store('fontScale', v); applyFont(); fit(); return;
     }
     if (id === 'pdf-export') return printPdf();
+    if (id === 'audio-download') {
+      if (!curr) return;
+      const sec = curr.s.sections[curr.i];
+      const url = 'reading/' + sec.file.replace(/\.md$/i, '.mp4');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = url.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
     if (t.classList.contains('para-no')) {
       const r = $('#right-' + t.closest('[data-para]').dataset.para);
       if (r) r.scrollIntoView({ behavior: 'smooth', block: 'start' });
