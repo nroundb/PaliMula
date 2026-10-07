@@ -164,27 +164,17 @@
     if (id === 'audio-download') {
       if (!curr) return;
       const sec = curr.s.sections[curr.i];
-      const url = 'reading/' + sec.file.replace(/\.md$/i, '.mp4');
+      // Construct absolute URL based on current page path
+      const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+      const url = basePath + 'reading/' + sec.file.replace(/\.md$/i, '.mp4');
       
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('Network response was not ok');
-          return res.blob();
-        })
-        .then(blob => {
-          const blobUrl = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = blobUrl;
-          a.download = url.split('/').pop();
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(blobUrl);
-        })
-        .catch(err => {
-          alert('해당 독송 파일을 불러올 수 없습니다.');
-          console.error(err);
-        });
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = sec.file.split('/').pop().replace(/\.md$/i, '.mp4');
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       return;
     }
     if (t.classList.contains('para-no')) {
