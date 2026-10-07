@@ -93,7 +93,7 @@
       nav(s.sections[i - 1], '◀') + nav(next, '▶') +
       `<input type="search" id="word-search" placeholder="단어 검색 (예: sati)" aria-label="단어 검색">` +
       `<select id="para-jump" aria-label="문단 이동"><option value="">문단 이동</option>${paras.map(p => `<option value="${p.no}">문단 ${p.no}</option>`).join('')}</select>` +
-      `<div class="font-size-control"><button id="font-dec" aria-label="글자 작게">A-</button><button id="font-inc" aria-label="글자 크게">A+</button></div>${THEME_BTN}<button id="pdf-export">PDF</button><button id="audio-download">독송다운로드</button></header>` +
+      `<div class="font-size-control"><button id="font-dec" aria-label="글자 작게">A-</button><button id="font-inc" aria-label="글자 크게">A+</button></div>${THEME_BTN}<button id="pdf-export">PDF</button><button id="audio-download" type="button">독송다운로드</button></header>` +
       `<div class="container"><aside class="left-pane">${paras.map(leftHtml).join('')}</aside><main class="right-pane">${paras.map(rightHtml).join('')}` +
       `<div class="next-wrap">${next ? `<a class="btn" href="#/${s.id}/${next.id}"><strong>다음 section ▶</strong><span>${esc(next.label)}</span></a>` : `<a class="btn" href="#/${s.id}"><strong>section 목록으로</strong></a>`}</div></main></div>` +
       (debug ? dbgPanel(data, s, sec) : '');
@@ -164,17 +164,16 @@
     if (id === 'audio-download') {
       if (!curr) return;
       const sec = curr.s.sections[curr.i];
-      // Construct absolute URL safely
-      const baseUrl = window.location.href.split('#')[0];
-      const audioPath = 'reading/' + sec.file.replace(/\.md$/i, '.mp4');
-      const url = new URL(audioPath, baseUrl).href;
-      
+      // 상대 경로는 현재 index.html을 기준으로 브라우저가 해석한다.
+      // location.href를 조합하면 배포 주소 또는 hash route에 따라 상위 경로로
+      // 잘못 해석될 수 있어, 실제 정적 파일 구조를 그대로 사용한다.
+      const audioPath = './reading/' + sec.file.replace(/\.md$/i, '.mp4');
       const a = document.createElement('a');
-      a.href = url;
-      a.download = sec.file.split('/').pop().replace(/\.md$/i, '.mp4');
+      a.href = audioPath;
+      a.download = audioPath.split('/').pop();
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => a.remove(), 100);
+      a.remove();
       return;
     }
     if (t.classList.contains('para-no')) {
