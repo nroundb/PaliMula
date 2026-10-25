@@ -247,6 +247,27 @@ table.rule-table code {
         </div>
       </details>
 
+      <!-- ▼ 예외 변환규칙 (접힘) -->
+      <details class="rule-section">
+        <summary>예외 변환규칙</summary>
+        <div class="section-body">
+          <table class="rule-table">
+            <tr>
+              <th>구분</th>
+              <th>처리 방식</th>
+              <th>예시</th>
+            </tr>
+            <tr>
+              <td>ㄹ받침 + 장음기호 (-) + ㄹ초성<br>(붙어 있을 때만)</td>
+              <td>앞철자의 종성과 뒷철자의 초성이 모두 "ㄹ"이고 그 사이에 장음기호(-)가 있으면,
+                앞철자의 받침 "ㄹ"을 떼어 내고, 장음 모음(일반 변환규칙과 동일)에 "ㄹ"받침을 붙인 음절(초성 ㅇ)을 새로 만들어 삽입<br>
+                (일반 변환규칙보다 먼저 적용)</td>
+              <td>물-라 ➔ 무울라 (물ㅜ라 ✕)<br>갈-라 ➔ 가알라<br>윌-라 ➔ 위일라<br>욜-라 ➔ 요올라</td>
+            </tr>
+          </table>
+        </div>
+      </details>
+
       <!-- ▼ 특별 변환규칙 (접힘, 표는 SPECIAL_RULES 배열에서 자동 생성) -->
       <details class="rule-section">
         <summary>특별 변환규칙</summary>
@@ -265,7 +286,7 @@ table.rule-table code {
           </table>
         </div>
       </details>
-
+            
     </div>
   </div>
 
@@ -382,13 +403,37 @@ const LONG_VOWEL_MAP = [
   'ㅣ'  // ㅣ
 ];
 
+// 중성 21개 자모 (유니코드 순서)
+const MEDIAL_JAMO = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+
+// 예외 변환규칙: 앞철자 종성 ㄹ + 장음기호(-) + 뒷철자 초성 ㄹ (붙어 있을 때만)
+// 예) 물-라 → 무울라
+function applyExceptionRules(text) {
+  return text.replace(/([가-힣])-(?=([가-힣]))/g, function(match, prev, next) {
+    const pCode = prev.charCodeAt(0) - 0xAC00;
+    const nCode = next.charCodeAt(0) - 0xAC00;
+    const pFinal = pCode % 28;                       // 앞철자 종성
+    const pMedial = Math.floor((pCode % 588) / 28);  // 앞철자 중성
+    const nInitial = Math.floor(nCode / 588);        // 뒷철자 초성
+    // 종성 ㄹ = 8, 초성 ㄹ = 5 (겹받침 ㄺ·ㄻ 등은 종성 번호가 달라 자동 제외)
+    if (pFinal !== 8 || nInitial !== 5) return match;
+    const withoutFinal = String.fromCharCode(0xAC00 + pCode - 8);   // 받침 제거
+    const longMedial = MEDIAL_JAMO.indexOf(LONG_VOWEL_MAP[pMedial]); // 장음 모음
+    const extra = String.fromCharCode(0xAC00 + 11 * 588 + longMedial * 28 + 8); // ㅇ + 모음 + ㄹ
+    return withoutFinal + extra;
+  });
+}
+
 function convertForTTS(text) {
   if (!text) return '';
 
   // 1. 특별 변환규칙 (연결기호 등) 먼저 적용
   let result = applySpecialRules(text);
 
-  // 2. 장음기호(-, hyphen) 변환
+  // 2. 예외 변환규칙 (ㄹ받침 + - + ㄹ초성) 적용
+  result = applyExceptionRules(result);
+
+  // 3. 장음기호(-, hyphen) 변환
   result = result.replace(/([가-힣])-/g, function(match, char) {
     const code = char.charCodeAt(0) - 0xAC00;
     if (code >= 0 && code <= 11171) {
